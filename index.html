@@ -14,30 +14,20 @@
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
-  <!-- NAVIGATION BAR (DINAMIS DARI DATABASE) -->
+  <!-- NAVIGATION BAR -->
   <nav class="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
     <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
       <a href="#" id="nav-brand" class="text-2xl font-bold text-blue-600 tracking-wide">Hostel</a>
-      
-      <!-- Menu Desktop (Dirender Dinamis) -->
-      <div id="desktop-menu" class="hidden md:flex space-x-8 font-semibold text-gray-600">
-        <!-- Dirender oleh JS -->
-      </div>
-
+      <div id="desktop-menu" class="hidden md:flex space-x-8 font-semibold text-gray-600"></div>
       <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 focus:outline-none">
         <i class="fa-solid fa-bars text-2xl" id="menu-icon"></i>
       </button>
     </div>
-
-    <!-- Menu Mobile (Dirender Dinamis) -->
-    <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 flex flex-col space-y-4 px-6 py-4 font-semibold shadow-inner">
-      <!-- Dirender oleh JS -->
-    </div>
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 flex flex-col space-y-4 px-6 py-4 font-semibold shadow-inner"></div>
   </nav>
 
-  <!-- ==================== AREA HOMEPAGE UTAMA ==================== -->
+  <!-- HOMEPAGE AREA -->
   <div id="homepage-area">
-    <!-- HERO AUTOMATIC SLIDER -->
     <header class="relative bg-gray-900 text-white h-[65vh] flex items-center justify-center overflow-hidden">
       <div id="slider-container" class="absolute inset-0 w-full h-full"></div>
       <div class="absolute inset-0 bg-black bg-opacity-50"></div>
@@ -52,35 +42,30 @@
     </header>
 
     <main class="max-w-6xl mx-auto py-16 px-6">
-      <!-- PILIHAN KAMAR -->
       <section id="rooms-section" class="scroll-mt-24 mb-24">
         <h2 class="text-3xl font-bold text-center mb-2">Pilihan Kamar Terbaik</h2>
         <p class="text-center text-gray-500 mb-12">Temukan kenyamanan istirahat sesuai anggaran Anda</p>
         <div id="rooms-container" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
       </section>
 
-      <!-- PROMO & BERITA -->
       <section id="posts-section" class="scroll-mt-24 mb-24">
         <h2 class="text-3xl font-bold text-center mb-2">Promo & Info Terbaru</h2>
         <p class="text-center text-gray-500 mb-12">Dapatkan penawaran menarik khusus untuk liburan Anda</p>
         <div id="posts-container" class="grid grid-cols-1 md:grid-cols-2 gap-8"></div>
       </section>
 
-      <!-- TESTIMONI -->
       <section id="testimonials-section" class="scroll-mt-24 mb-24">
         <h2 class="text-3xl font-bold text-center mb-2">Apa Kata Mereka?</h2>
         <p class="text-center text-gray-500 mb-12">Ulasan jujur langsung dari tamu-tamu kami</p>
         <div id="testimonials-container" class="grid grid-cols-1 md:grid-cols-2 gap-8"></div>
       </section>
 
-      <!-- INSTAGRAM FEED -->
       <section id="instagram-section" class="mb-24 hidden">
         <h2 class="text-3xl font-bold text-center mb-2">Ikuti Instagram Kami</h2>
         <p class="text-center text-gray-500 mb-12">Keseruan momen harian di hostel kami</p>
         <div id="instagram-container" class="max-w-md mx-auto border border-gray-100 rounded-xl p-4 bg-white shadow-sm"></div>
       </section>
 
-      <!-- GOOGLE MAPS -->
       <section id="maps-section" class="scroll-mt-24">
         <h2 class="text-3xl font-bold text-center mb-2">Lokasi Strategis</h2>
         <p class="text-center text-gray-500 mb-12">Sangat mudah dijangkau dari pusat keramaian</p>
@@ -91,15 +76,13 @@
     </main>
   </div>
 
-  <!-- ==================== AREA CUSTOM PAGE DINAMIS (SPA ROUTER) ==================== -->
+  <!-- CUSTOM PAGE AREA -->
   <div id="custom-page-area" class="hidden max-w-4xl mx-auto py-16 px-6 flex-grow">
     <button onclick="navigateHome()" class="text-blue-600 font-bold mb-6 hover:underline flex items-center space-x-2">
       <i class="fa-solid fa-arrow-left"></i> <span>Kembali ke Beranda</span>
     </button>
     <h1 id="page-title" class="text-4xl font-extrabold mb-8 text-gray-900 border-b pb-4">Judul Halaman</h1>
-    <div id="page-content" class="prose max-w-none text-gray-700 leading-relaxed space-y-4">
-      <!-- Konten halaman dinamis dimasukkan di sini -->
-    </div>
+    <div id="page-content" class="prose max-w-none text-gray-700 leading-relaxed space-y-4"></div>
   </div>
 
   <!-- FLOATING WA BUTTON -->
@@ -116,244 +99,7 @@
     </div>
   </footer>
 
-  <!-- CORE SCRIPTS -->
-  <script>
-    const API_URL = 'https://wa.mrdsolution.my.id/cms-api/api';
-    const API_TOKEN = 'RAHASIA_CMS_HOSTEL_123';
-    let slideIndex = 0;
-
-    document.addEventListener('DOMContentLoaded', () => {
-      handleRouting();
-    });
-
-    function toggleMobileMenu() {
-      const menu = document.getElementById('mobile-menu');
-      const icon = document.getElementById('menu-icon');
-      menu.classList.toggle('hidden');
-      icon.className = menu.classList.contains('hidden') ? "fa-solid fa-bars text-2xl" : "fa-solid fa-xmark text-2xl";
-    }
-
-    // Router SPA untuk Halaman Dinamis
-    function handleRouting() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const pageSlug = urlParams.get('page');
-
-      if (pageSlug) {
-        // Mode Halaman Kustom
-        document.getElementById('homepage-area').classList.add('hidden');
-        document.getElementById('custom-page-area').classList.remove('hidden');
-        loadPageContent(pageSlug);
-      } else {
-        // Mode Beranda Biasa
-        document.getElementById('homepage-area').classList.remove('hidden');
-        document.getElementById('custom-page-area').classList.add('hidden');
-        loadCachedData();
-        fetchFreshData();
-      }
-    }
-
-    function navigateHome() {
-      window.history.pushState({}, '', window.location.pathname);
-      handleRouting();
-    }
-
-    // Muat Caching Lokal
-    function loadCachedData() {
-      const cachedSettings = localStorage.getItem('cms_settings');
-      const cachedRooms = localStorage.getItem('cms_rooms');
-      const cachedPosts = localStorage.getItem('cms_posts');
-
-      if (cachedSettings) renderSettings(JSON.parse(cachedSettings));
-      if (cachedRooms) renderRooms(JSON.parse(cachedRooms));
-      if (cachedPosts) renderPosts(JSON.parse(cachedPosts));
-    }
-
-    // Ambil Data Segar dari Server
-    async function fetchFreshData() {
-      const headers = { 'X-API-KEY': API_TOKEN };
-      try {
-        const [resSettings, resRooms, resPosts] = await Promise.all([
-          fetch(`${API_URL}/settings`, { headers }).then(r => r.json()),
-          fetch(`${API_URL}/rooms`, { headers }).then(r => r.json()),
-          fetch(`${API_URL}/posts`, { headers }).then(r => r.json())
-        ]);
-
-        if (resSettings.status === 'success') {
-          const settingsObj = {};
-          resSettings.data.forEach(item => {
-            settingsObj[item.setting_key] = item.setting_value;
-          });
-          localStorage.setItem('cms_settings', JSON.stringify(settingsObj));
-          renderSettings(settingsObj);
-        }
-        if (resRooms.status === 'success') {
-          localStorage.setItem('cms_rooms', JSON.stringify(resRooms.data));
-          renderRooms(resRooms.data);
-        }
-        if (resPosts.status === 'success') {
-          localStorage.setItem('cms_posts', JSON.stringify(resPosts.data));
-          renderPosts(resPosts.data);
-        }
-      } catch (err) {
-        console.error('Error menyinkronkan data segar:', err);
-      }
-    }
-
-    // Ambil Konten Halaman Kustom secara Dinamis
-    async function loadPageContent(slug) {
-      const headers = { 'X-API-KEY': API_TOKEN };
-      try {
-        // Tarik daftar menu navigasi terlebih dahulu agar menu header tetap tampil normal saat ganti halaman
-        const resSettings = await fetch(`${API_URL}/settings`, { headers }).then(r => r.json());
-        if (resSettings.status === 'success') {
-          const settingsObj = {};
-          resSettings.data.forEach(item => { settingsObj[item.setting_key] = item.setting_value; });
-          renderSettings(settingsObj);
-        }
-
-        const resPages = await fetch(`${API_URL}/pages`, { headers }).then(r => r.json());
-        if (resPages.status === 'success') {
-          const page = resPages.data.find(p => p.slug === slug);
-          if (page) {
-            document.getElementById('page-title').innerText = page.title;
-            document.getElementById('page-content').innerHTML = page.content;
-          } else {
-            document.getElementById('page-title').innerText = 'Halaman Tidak Ditemukan (404)';
-            document.getElementById('page-content').innerHTML = '<p>Maaf, halaman kustom yang Anda cari tidak ditemukan.</p>';
-          }
-        }
-      } catch (err) {
-        console.error('Gagal memuat halaman kustom:', err);
-      }
-    }
-
-    // Render Setting & Navigasi Dinamis
-    function renderSettings(settings) {
-      if (!settings) return;
-      document.getElementById('nav-brand').innerText = settings.site_name || 'Hostel';
-      document.getElementById('footer-site-name').innerText = settings.site_name || 'Hostel';
-      document.getElementById('footer-address').innerText = settings.address || '';
-      
-      const waLink = settings.whatsapp_number ? `https://wa.me/${settings.whatsapp_number}` : '#';
-      if (document.getElementById('btn-hero-wa')) document.getElementById('btn-hero-wa').href = waLink;
-      document.getElementById('floating-wa').href = waLink;
-
-      if (document.getElementById('maps-iframe')) document.getElementById('maps-iframe').src = settings.maps_iframe || '';
-
-      // Render Menu Navigasi Dinamis
-      if (settings.navigation_menu) {
-        try {
-          const menuList = JSON.parse(settings.navigation_menu);
-          renderNavigation(menuList);
-        } catch (e) {
-          console.error("Format JSON navigasi salah");
-        }
-      }
-
-      // Render Slider Gambar (Hanya jika ada di area homepage)
-      if (document.getElementById('slider-container') && settings.slider_images) {
-        const images = settings.slider_images.split(',');
-        const sliderContainer = document.getElementById('slider-container');
-        sliderContainer.innerHTML = images.map((img, idx) => `
-          <div class="slide absolute inset-0 w-full h-full bg-cover bg-center ${idx === 0 ? 'active' : ''}" style="background-image: url('${img.trim()}')"></div>
-        `).join('');
-        startSlider();
-      }
-
-      if (settings.instagram_toggle === 'ON' && settings.instagram_embed_code && document.getElementById('instagram-section')) {
-        document.getElementById('instagram-section').classList.remove('hidden');
-        document.getElementById('instagram-container').innerHTML = settings.instagram_embed_code;
-        if (window.instgrm) window.instgrm.Embeds.process();
-      } else if (document.getElementById('instagram-section')) {
-        document.getElementById('instagram-section').classList.add('hidden');
-      }
-
-      if (settings.testimonials) {
-        try { renderTestimonials(JSON.parse(settings.testimonials)); } catch (e) {}
-      }
-    }
-
-    function renderNavigation(menuList) {
-      const desktop = document.getElementById('desktop-menu');
-      const mobile = document.getElementById('mobile-menu');
-
-      // Bangun elemen menu untuk desktop & mobile
-      const htmlMenu = menuList.map(item => {
-        // Jika link mengarah ke dynamic page, ubah menjadi routing SPA agar cepat tanpa reload
-        if (item.url.startsWith('?page=')) {
-          return `<a href="${item.url}" class="hover:text-blue-600 transition" onclick="setTimeout(handleRouting, 50)">${item.label}</a>`;
-        }
-        return `<a href="${item.url}" class="hover:text-blue-600 transition">${item.label}</a>`;
-      }).join('');
-
-      desktop.innerHTML = htmlMenu;
-      
-      const htmlMobileMenu = menuList.map(item => {
-        if (item.url.startsWith('?page=')) {
-          return `<a href="${item.url}" onclick="toggleMobileMenu(); setTimeout(handleRouting, 50)" class="hover:text-blue-600">${item.label}</a>`;
-        }
-        return `<a href="${item.url}" onclick="toggleMobileMenu()" class="hover:text-blue-600">${item.label}</a>`;
-      }).join('');
-      
-      mobile.innerHTML = htmlMobileMenu;
-    }
-
-    function startSlider() {
-      const slides = document.querySelectorAll('.slide');
-      if (slides.length <= 1) return;
-      setInterval(() => {
-        slides[slideIndex].classList.remove('active');
-        slideIndex = (slideIndex + 1) % slides.length;
-        slides[slideIndex].classList.add('active');
-      }, 5000);
-    }
-
-    function renderRooms(rooms) {
-      const container = document.getElementById('rooms-container');
-      if (!container || !rooms || rooms.length === 0) return;
-      container.innerHTML = rooms.map(room => `
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 transition hover:shadow-md">
-          <img src="${room.image_url}" alt="${room.room_type}" class="w-full h-48 object-cover">
-          <div class="p-6">
-            <h3 class="text-xl font-bold mb-1">${room.room_type}</h3>
-            <p class="text-blue-600 font-extrabold text-lg mb-3">Rp ${parseInt(room.price_start_from).toLocaleString('id-ID')} <span class="text-xs text-gray-400 font-normal">/ malam</span></p>
-            <p class="text-gray-600 text-sm mb-4 leading-relaxed">${room.description}</p>
-            <div class="text-xs text-gray-500 bg-gray-50 p-2.5 rounded border border-gray-100">
-              <strong class="text-gray-700">Fasilitas:</strong> ${room.amenities}
-            </div>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function renderPosts(posts) {
-      const container = document.getElementById('posts-container');
-      if (!container || !posts || posts.length === 0) return;
-      const publishedPosts = posts.filter(p => p.status === 'Published');
-      container.innerHTML = publishedPosts.map(post => `
-        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 transition hover:shadow-md">
-          <h3 class="text-xl font-bold mb-2">${post.title}</h3>
-          <div class="text-gray-600 text-sm mb-4 leading-relaxed">${post.content}</div>
-          <span class="text-xs text-gray-400 font-medium">
-            <i class="fa-regular fa-calendar-days mr-1"></i> Dipublikasikan pada: ${new Date(post.published_at).toLocaleDateString('id-ID')}
-          </span>
-        </div>
-      `).join('');
-    }
-
-    function renderTestimonials(list) {
-      const container = document.getElementById('testimonials-container');
-      if (!container || !list || list.length === 0) return;
-      container.innerHTML = list.map(item => `
-        <div class="bg-white border border-gray-100 p-6 rounded-xl shadow-sm">
-          <div class="flex items-center space-x-1 mb-3 text-amber-400">
-            ${Array.from({ length: item.stars }, () => '<i class="fa-solid fa-star text-sm"></i>').join('')}
-          </div>
-          <p class="text-gray-600 text-sm italic mb-4 leading-relaxed">"${item.comment}"</p>
-          <div class="font-bold text-gray-800 text-sm">- ${item.name}</div>
-        </div>
-      `).join('');
-    }
-  </script>
+  <!-- LINK KE SCRIPT UTAMA -->
+  <script src="app.js"></script>
 </body>
 </html>

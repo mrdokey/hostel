@@ -3,110 +3,104 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CMS Hostel - Panel Admin</title>
-  <!-- Tailwind CSS CDN -->
+  <title>Hostel Admin Panel</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans min-h-screen">
 
-  <!-- 1. FORM LOGIN (AKSES PASSWORD) -->
+  <!-- 1. LOGIN SCREEN -->
   <div id="login-screen" class="flex items-center justify-center min-h-screen bg-gray-950 px-4">
     <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
-      <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Portal Admin</h2>
+      <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Admin Login Portal</h2>
       <div class="mb-4">
         <label class="block text-sm font-semibold mb-2">Token Akses Admin</label>
-        <input type="password" id="input-token" placeholder="Masukkan token..." class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+        <input type="password" id="input-token" placeholder="Masukkan token keamanan..." class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
       </div>
       <button onclick="attemptLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition shadow-md">
-        Masuk Dashboard
+        Masuk Ke Panel
       </button>
       <p id="login-error" class="text-red-500 text-sm mt-3 text-center hidden">Token salah! Akses ditolak.</p>
     </div>
   </div>
 
-  <!-- 2. KONTEN DASHBOARD UTAMA -->
+  <!-- 2. MAIN DASHBOARD CONTENT -->
   <div id="dashboard-screen" class="hidden">
-    <!-- NAVIGATION HEADER -->
+    <!-- NAVBAR -->
     <nav class="bg-white border-b border-gray-200 py-4 px-6 flex justify-between items-center shadow-sm">
-      <span class="text-xl font-extrabold text-blue-600 tracking-wide"><i class="fa-solid fa-hotel mr-2"></i>Panel Admin Hostel</span>
-      <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
-        Keluar <i class="fa-solid fa-right-from-bracket ml-1"></i>
+      <span class="text-xl font-extrabold text-blue-600 tracking-wide"><i class="fa-solid fa-hotel mr-2"></i>Hostel Admin CMS</span>
+      <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition shadow-sm">
+        <i class="fa-solid fa-right-from-bracket mr-1"></i> Keluar
       </button>
     </nav>
 
     <div class="max-w-6xl mx-auto py-10 px-6">
-      <!-- TABS SWITCHER -->
+      <!-- NAVIGATION TABS -->
       <div class="flex space-x-2 border-b border-gray-200 mb-8 pb-px overflow-x-auto whitespace-nowrap">
         <button onclick="switchTab('settings')" id="tab-settings" class="border-b-2 border-blue-600 pb-3 px-4 font-bold text-blue-600 outline-none transition">Pengaturan Umum</button>
         <button onclick="switchTab('menu')" id="tab-menu" class="border-b-2 border-transparent pb-3 px-4 font-semibold text-gray-500 hover:text-gray-700 outline-none transition">Menu Navigasi</button>
         <button onclick="switchTab('rooms')" id="tab-rooms" class="border-b-2 border-transparent pb-3 px-4 font-semibold text-gray-500 hover:text-gray-700 outline-none transition">Katalog Kamar</button>
-        <button onclick="switchTab('posts')" id="tab-posts" class="border-b-2 border-transparent pb-3 px-4 font-semibold text-gray-500 hover:text-gray-700 outline-none transition">Promo & Info</button>
+        <button onclick="switchTab('posts')" id="tab-posts" class="border-b-2 border-transparent pb-3 px-4 font-semibold text-gray-500 hover:text-gray-700 outline-none transition">Artikel & Promo</button>
         <button onclick="switchTab('pages')" id="tab-pages" class="border-b-2 border-transparent pb-3 px-4 font-semibold text-gray-500 hover:text-gray-700 outline-none transition">Halaman Kustom</button>
         <button onclick="switchTab('testimonials')" id="tab-testimonials" class="border-b-2 border-transparent pb-3 px-4 font-semibold text-gray-500 hover:text-gray-700 outline-none transition">Testimoni</button>
       </div>
 
-      <!-- ==================== TAB 1: PENGATURAN UMUM ==================== -->
+      <!-- ==================== TAB 1: GENERAL SETTINGS ==================== -->
       <section id="section-settings" class="space-y-6">
         <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
-          <h2 class="text-xl font-bold mb-6 text-gray-800 border-b pb-2"><i class="fa-solid fa-gear mr-2 text-blue-600"></i>Ubah Informasi Utama Website</h2>
+          <h2 class="text-xl font-bold mb-6 text-gray-800 border-b pb-2"><i class="fa-solid fa-gear mr-2 text-blue-600"></i>Ubah Informasi Website</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label class="block text-sm font-semibold mb-2">Nama Website / Hostel</label>
-              <input type="text" id="setting-site_name" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+              <input type="text" id="setting-site_name" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
             <div>
-              <label class="block text-sm font-semibold mb-2">WhatsApp Kontak (Contoh: 628123...)</label>
-              <input type="text" id="setting-whatsapp_number" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+              <label class="block text-sm font-semibold mb-2">Nomor WhatsApp Admin (Contoh: 628123...)</label>
+              <input type="text" id="setting-whatsapp_number" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
             <div class="md:col-span-2">
               <label class="block text-sm font-semibold mb-2">Judul Utama Halaman Depan (Hero Title)</label>
-              <input type="text" id="setting-hero_title" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+              <input type="text" id="setting-hero_title" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
             <div class="md:col-span-2">
               <label class="block text-sm font-semibold mb-2">Sub-judul Halaman Depan (Hero Subtitle)</label>
-              <textarea id="setting-hero_subtitle" rows="2" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+              <textarea id="setting-hero_subtitle" rows="2" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
             </div>
             <div class="md:col-span-2">
-              <label class="block text-sm font-semibold mb-2">Daftar Gambar Slider Depan (Pisahkan link URL gambar dengan koma)</label>
-              <textarea id="setting-slider_images" rows="3" placeholder="https://link-foto1.com, https://link-foto2.com" class="w-full px-4 py-2 border rounded-lg text-xs font-mono outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+              <label class="block text-sm font-semibold mb-2">Gambar Slider Depan (Pisahkan tautan link dengan tanda koma)</label>
+              <textarea id="setting-slider_images" rows="3" placeholder="https://link-gambar1.com, https://link-gambar2.com" class="w-full px-4 py-2 border rounded-lg text-xs font-mono outline-none focus:ring-2 focus:ring-blue-500"></textarea>
             </div>
             <div class="md:col-span-2">
-              <label class="block text-sm font-semibold mb-2">Alamat Lengkap Hostel</label>
-              <input type="text" id="setting-address" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+              <label class="block text-sm font-semibold mb-2">Alamat Hostel</label>
+              <input type="text" id="setting-address" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
             <div class="md:col-span-2">
-              <label class="block text-sm font-semibold mb-2">URL Google Maps Iframe</label>
-              <input type="text" id="setting-maps_iframe" placeholder="https://www.google.com/maps/embed..." class="w-full px-4 py-2 border text-xs font-mono rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+              <label class="block text-sm font-semibold mb-2">Google Maps Embed Link (Iframe Src)</label>
+              <input type="text" id="setting-maps_iframe" placeholder="https://www.google.com/maps/embed..." class="w-full px-4 py-2 border text-xs font-mono rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
             <div>
-              <label class="block text-sm font-semibold mb-2">Tampilkan Instagram Feed</label>
+              <label class="block text-sm font-semibold mb-2">Instagram Feed Tampilan</label>
               <select id="setting-instagram_toggle" class="w-full px-4 py-2 border rounded-lg outline-none">
-                <option value="ON">ON (Aktif)</option>
+                <option value="ON">ON (Aktif Tampil)</option>
                 <option value="OFF">OFF (Sembunyikan)</option>
               </select>
             </div>
             <div class="md:col-span-2">
-              <label class="block text-sm font-semibold mb-2">Kode HTML Embed Instagram</label>
-              <textarea id="setting-instagram_embed_code" rows="3" class="w-full p-2 border text-xs font-mono rounded-lg outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+              <label class="block text-sm font-semibold mb-2">Kode Embed Instagram HTML</label>
+              <textarea id="setting-instagram_embed_code" rows="3" class="w-full p-2 border text-xs font-mono rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
             </div>
           </div>
           <button onclick="saveSettings()" class="mt-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-lg transition shadow-md">
-            Simpan Konfigurasi Umum
+            Simpan Konfigurasi Utama
           </button>
         </div>
       </section>
 
-      <!-- ==================== TAB 2: MENU NAVIGASI ==================== -->
+      <!-- ==================== TAB 2: MENU NAVIGATION ==================== -->
       <section id="section-menu" class="hidden bg-white p-8 rounded-xl shadow-sm border border-gray-200">
         <h2 class="text-xl font-bold mb-2 text-gray-800"><i class="fa-solid fa-compass mr-2 text-blue-600"></i>Menu Navigasi Header</h2>
         <p class="text-sm text-gray-500 mb-6">Sesuaikan tautan di bar menu atas. Gunakan `?page=slug-halaman` untuk mengarah ke Halaman Kustom.</p>
-        
-        <div id="nav-editor-container" class="space-y-4 mb-6">
-          <!-- Item baris menu dinamis -->
-        </div>
-        
+        <div id="nav-editor-container" class="space-y-4 mb-6"></div>
         <button onclick="addNavigationRow()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-4 py-2 rounded-lg text-sm transition">
           + Tambah Baris Baru
         </button>
@@ -125,13 +119,13 @@
         </div>
         <div id="rooms-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
 
-        <!-- MODAL EDIT/TAMBAH KAMAR -->
-        <div id="room-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div class="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-fade-in">
+        <!-- MODAL KAMAR -->
+        <div id="room-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div class="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <h3 id="room-modal-title" class="text-xl font-bold mb-6 text-gray-800">Formulir Kamar</h3>
             <div class="space-y-4">
               <div>
-                <label class="block text-sm font-semibold mb-1">ID Kamar (Contoh: RM-101)</label>
+                <label class="block text-sm font-semibold mb-1">ID Kamar (Contoh: RM-001)</label>
                 <input type="text" id="room-id" class="w-full px-4 py-2 border rounded-lg outline-none">
               </div>
               <div>
@@ -139,18 +133,18 @@
                 <input type="text" id="room-type" class="w-full px-4 py-2 border rounded-lg outline-none">
               </div>
               <div>
-                <label class="block text-sm font-semibold mb-1">Harga Mulai Dari (Rp)</label>
+                <label class="block text-sm font-semibold mb-1">Harga Sewa Mulai Dari (Rp)</label>
                 <input type="number" id="room-price" class="w-full px-4 py-2 border rounded-lg outline-none">
               </div>
               <div>
-                <label class="block text-sm font-semibold mb-1">Link URL Gambar Kamar</label>
+                <label class="block text-sm font-semibold mb-1">Link Gambar Kamar</label>
                 <input type="text" id="room-image" class="w-full px-4 py-2 border text-xs font-mono rounded-lg outline-none">
                 <input type="file" id="room-file-input" onchange="uploadToCloudinary(this, 'room-image')" class="mt-2 text-xs">
                 <span id="upload-status-room" class="text-xs text-blue-500 ml-2"></span>
               </div>
               <div>
                 <label class="block text-sm font-semibold mb-1">Fasilitas Kamar (Pisahkan dengan koma)</label>
-                <input type="text" id="room-amenities" placeholder="AC, Wifi, Kamar Mandi Dalam" class="w-full px-4 py-2 border rounded-lg outline-none">
+                <input type="text" id="room-amenities" placeholder="AC, Wifi, Private Bathroom" class="w-full px-4 py-2 border rounded-lg outline-none">
               </div>
               <div>
                 <label class="block text-sm font-semibold mb-1">Deskripsi Kamar</label>
@@ -165,11 +159,11 @@
         </div>
       </section>
 
-      <!-- ==================== TAB 4: PROMO & ARTIKEL ==================== -->
+      <!-- ==================== TAB 4: ARTIKEL & PROMO ==================== -->
       <section id="section-posts" class="hidden bg-white p-8 rounded-xl shadow-sm border border-gray-200">
         <div class="flex justify-between items-center mb-6">
-          <h2 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-bullhorn mr-2 text-blue-600"></i>Katalog Promo & Artikel</h2>
-          <button onclick="openPostForm()" class="bg-green-500 hover:bg-green-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
+          <h2 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-bullhorn mr-2 text-blue-600"></i>Artikel & Berita</h2>
+          <button onclick="openPostForm()" class="bg-green-500 hover:bg-green-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition shadow-sm">
             + Tulis Artikel Baru
           </button>
         </div>
@@ -219,7 +213,7 @@
         </div>
         <div id="pages-list-container" class="space-y-4"></div>
 
-        <!-- MODAL HALAMAN KUSTOM -->
+        <!-- MODAL PAGE -->
         <div id="page-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div class="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <h3 id="page-modal-title" class="text-xl font-bold mb-6">Formulir Halaman Baru</h3>
@@ -291,503 +285,7 @@
     </div>
   </div>
 
-  <!-- SCRIPT LOGIKA UTAMA -->
-  <script>
-    const API_URL = 'https://wa.mrdsolution.my.id/cms-api/api';
-    let token = '';
-
-    // KONFIGURASI INTEGRASI CLOUDINARY ANDA
-    const CLOUDINARY_CLOUD_NAME = 'dnobafum2'; 
-    const CLOUDINARY_PRESET = 'PRESET_UNSIGNED_ANDA'; // Ganti dengan unsigned preset Cloudinary Anda
-
-    // Buffer Penyimpanan Sementara (State Management)
-    let globalSettings = [];
-    let globalTestimonials = [];
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const savedToken = localStorage.getItem('cms_admin_token');
-      if (savedToken) {
-        token = savedToken;
-        showDashboard();
-      }
-    });
-
-    function attemptLogin() {
-      const inputToken = document.getElementById('input-token').value;
-      if (inputToken === 'Sukses1234#') {
-        token = inputToken;
-        localStorage.setItem('cms_admin_token', token);
-        showDashboard();
-      } else {
-        document.getElementById('login-error').classList.remove('hidden');
-      }
-    }
-
-    function logout() {
-      localStorage.removeItem('cms_admin_token');
-      location.reload();
-    }
-
-    function showDashboard() {
-      document.getElementById('login-screen').classList.add('hidden');
-      document.getElementById('dashboard-screen').classList.remove('hidden');
-      loadAllData();
-    }
-
-    async function loadAllData() {
-      const headers = { 'X-API-KEY': token };
-      try {
-        const [resSettings, resRooms, resPosts, resPages] = await Promise.all([
-          fetch(`${API_URL}/settings`, { headers }).then(r => r.json()),
-          fetch(`${API_URL}/rooms`, { headers }).then(r => r.json()),
-          fetch(`${API_URL}/posts`, { headers }).then(r => r.json()),
-          fetch(`${API_URL}/pages`, { headers }).then(r => r.json())
-        ]);
-
-        if (resSettings.status === 'success') {
-          globalSettings = resSettings.data;
-          fillSettingsForm(resSettings.data);
-          renderNavigationEditor(resSettings.data);
-          renderTestimonialsTab(resSettings.data);
-        }
-        if (resRooms.status === 'success') renderRoomsList(resRooms.data);
-        if (resPosts.status === 'success') renderPostsList(resPosts.data);
-        if (resPages.status === 'success') renderPagesList(resPages.data);
-      } catch (err) {
-        alert('Terjadi kesalahan otentikasi jaringan server.');
-        logout();
-      }
-    }
-
-    // --- TAB 1: PENGATURAN UMUM ---
-    function fillSettingsForm(data) {
-      data.forEach(item => {
-        const input = document.getElementById(`setting-${item.setting_key}`);
-        if (input) input.value = item.setting_value;
-      });
-    }
-
-    async function saveSettings() {
-      const keys = ['site_name', 'whatsapp_number', 'hero_title', 'hero_subtitle', 'slider_images', 'address', 'maps_iframe', 'instagram_toggle', 'instagram_embed_code'];
-      const payload = keys.map(key => ({
-        key: key,
-        value: document.getElementById(`setting-${key}`).value
-      }));
-
-      try {
-        const res = await fetch(`${API_URL}/settings/update`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-API-KEY': token },
-          body: JSON.stringify(payload)
-        }).then(r => r.json());
-
-        if (res.status === 'success') alert('Pengaturan umum berhasil disimpan!');
-      } catch (err) {
-        alert('Gagal menyimpan.');
-      }
-    }
-
-    // --- TAB 2: EDITOR MENU NAVIGASI ---
-    function renderNavigationEditor(settings) {
-      const container = document.getElementById('nav-editor-container');
-      const menuSetting = settings.find(s => s.setting_key === 'navigation_menu');
-      let menuList = [];
-
-      try {
-        menuList = menuSetting ? JSON.parse(menuSetting.setting_value) : [];
-      } catch (e) {
-        menuList = [];
-      }
-
-      container.innerHTML = menuList.map((item, idx) => `
-        <div class="flex space-x-4 items-center bg-gray-50 p-3 rounded-lg border border-gray-100 nav-row">
-          <input type="text" placeholder="Nama Menu (Label)" value="${item.label}" class="px-3 py-1.5 border rounded flex-1 text-sm nav-label outline-none">
-          <input type="text" placeholder="Tautan (URL)" value="${item.url}" class="px-3 py-1.5 border rounded flex-1 text-xs font-mono nav-url outline-none">
-          <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 text-sm"><i class="fa-solid fa-trash"></i></button>
-        </div>
-      `).join('');
-    }
-
-    function addNavigationRow() {
-      const container = document.getElementById('nav-editor-container');
-      const div = document.createElement('div');
-      div.className = "flex space-x-4 items-center bg-gray-50 p-3 rounded-lg border border-gray-100 nav-row";
-      div.innerHTML = `
-        <input type="text" placeholder="Nama Menu (Label)" class="px-3 py-1.5 border rounded flex-1 text-sm nav-label outline-none">
-        <input type="text" placeholder="Tautan (URL)" class="px-3 py-1.5 border rounded flex-1 text-xs font-mono nav-url outline-none">
-        <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 text-sm"><i class="fa-solid fa-trash"></i></button>
-      `;
-      container.appendChild(div);
-    }
-
-    async function saveNavigationMenu() {
-      const rows = document.querySelectorAll('.nav-row');
-      const menuData = [];
-
-      rows.forEach(row => {
-        const label = row.querySelector('.nav-label').value;
-        const url = row.querySelector('.nav-url').value;
-        if (label && url) {
-          menuData.push({ label, url });
-        }
-      });
-
-      const payload = [{
-        key: 'navigation_menu',
-        value: JSON.stringify(menuData)
-      }];
-
-      try {
-        const res = await fetch(`${API_URL}/settings/update`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-API-KEY': token },
-          body: JSON.stringify(payload)
-        }).then(r => r.json());
-
-        if (res.status === 'success') alert('Susunan navigasi berhasil disimpan!');
-      } catch (err) {
-        alert('Gagal menyimpan.');
-      }
-    }
-
-    // --- TAB 3: KATALOG KAMAR ---
-    function renderRoomsList(rooms) {
-      const container = document.getElementById('rooms-list-container');
-      container.innerHTML = rooms.map(room => `
-        <div class="border border-gray-200 p-4 rounded-lg flex space-x-4 items-center bg-gray-50 shadow-sm">
-          <img src="${room.image_url}" class="w-16 h-16 object-cover rounded border">
-          <div class="flex-grow">
-            <h4 class="font-bold text-sm text-gray-800">${room.room_type}</h4>
-            <p class="text-xs text-blue-600 font-bold">Rp ${parseInt(room.price_start_from).toLocaleString('id-ID')}</p>
-          </div>
-          <button onclick='editRoom(${JSON.stringify(room)})' class="bg-blue-100 hover:bg-blue-200 text-blue-600 text-xs px-3 py-1.5 rounded font-bold">Edit</button>
-        </div>
-      `).join('');
-    }
-
-    function openRoomForm() {
-      document.getElementById('room-id').disabled = false;
-      document.getElementById('room-id').value = '';
-      document.getElementById('room-type').value = '';
-      document.getElementById('room-price').value = '';
-      document.getElementById('room-image').value = '';
-      document.getElementById('room-amenities').value = '';
-      document.getElementById('room-desc').value = '';
-      document.getElementById('room-modal-title').innerText = 'Tambah Kamar Baru';
-      document.getElementById('room-modal').classList.remove('hidden');
-    }
-
-    function editRoom(room) {
-      document.getElementById('room-id').value = room.id;
-      document.getElementById('room-id').disabled = true;
-      document.getElementById('room-type').value = room.room_type;
-      document.getElementById('room-price').value = room.price_start_from;
-      document.getElementById('room-image').value = room.image_url;
-      document.getElementById('room-amenities').value = room.amenities;
-      document.getElementById('room-desc').value = room.description;
-      document.getElementById('room-modal-title').innerText = 'Edit Kamar';
-      document.getElementById('room-modal').classList.remove('hidden');
-    }
-
-    function closeRoomModal() { document.getElementById('room-modal').classList.add('hidden'); }
-
-    async function saveRoom() {
-      const payload = {
-        id: document.getElementById('room-id').value,
-        room_type: document.getElementById('room-type').value,
-        price_start_from: document.getElementById('room-price').value,
-        image_url: document.getElementById('room-image').value,
-        amenities: document.getElementById('room-amenities').value,
-        description: document.getElementById('room-desc').value
-      };
-
-      try {
-        const res = await fetch(`${API_URL}/rooms/save`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-API-KEY': token },
-          body: JSON.stringify(payload)
-        }).then(r => r.json());
-
-        if (res.status === 'success') {
-          alert('Kamar berhasil disimpan!');
-          closeRoomModal();
-          loadAllData();
-        }
-      } catch (err) {
-        alert('Gagal menyimpan.');
-      }
-    }
-
-    // --- TAB 4: ARTIKEL & PROMO ---
-    function renderPostsList(posts) {
-      const container = document.getElementById('posts-list-container');
-      container.innerHTML = posts.map(post => `
-        <div class="border border-gray-200 p-4 rounded-lg flex justify-between items-center bg-gray-50 shadow-sm">
-          <div>
-            <h4 class="font-bold text-sm">${post.title}</h4>
-            <span class="text-xs px-2 py-0.5 rounded ${post.status === 'Published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">${post.status}</span>
-          </div>
-          <button onclick='editPost(${JSON.stringify(post)})' class="bg-blue-100 hover:bg-blue-200 text-blue-600 text-xs px-3 py-1.5 rounded font-bold">Edit</button>
-        </div>
-      `).join('');
-    }
-
-    function openPostForm() {
-      document.getElementById('post-id').value = '';
-      document.getElementById('post-title').value = '';
-      document.getElementById('post-slug').value = '';
-      document.getElementById('post-content').value = '';
-      document.getElementById('post-status').value = 'Published';
-      document.getElementById('post-modal-title').innerText = 'Tulis Artikel Baru';
-      document.getElementById('post-modal').classList.remove('hidden');
-    }
-
-    function editPost(post) {
-      document.getElementById('post-id').value = post.id;
-      document.getElementById('post-title').value = post.title;
-      document.getElementById('post-slug').value = post.slug;
-      document.getElementById('post-content').value = post.content;
-      document.getElementById('post-status').value = post.status;
-      document.getElementById('post-modal-title').innerText = 'Edit Artikel';
-      document.getElementById('post-modal').classList.remove('hidden');
-    }
-
-    function closePostModal() { document.getElementById('post-modal').classList.add('hidden'); }
-
-    async function savePost() {
-      const payload = {
-        id: document.getElementById('post-id').value || null,
-        title: document.getElementById('post-title').value,
-        slug: document.getElementById('post-slug').value,
-        content: document.getElementById('post-content').value,
-        status: document.getElementById('post-status').value
-      };
-
-      try {
-        const res = await fetch(`${API_URL}/posts/save`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-API-KEY': token },
-          body: JSON.stringify(payload)
-        }).then(r => r.json());
-
-        if (res.status === 'success') {
-          alert('Artikel berhasil disimpan!');
-          closePostModal();
-          loadAllData();
-        }
-      } catch (err) {
-        alert('Gagal menyimpan.');
-      }
-    }
-
-    // --- TAB 5: HALAMAN KUSTOM ---
-    function renderPagesList(pages) {
-      const container = document.getElementById('pages-list-container');
-      container.innerHTML = pages.map(page => `
-        <div class="border border-gray-200 p-4 rounded-lg flex justify-between items-center bg-gray-50 shadow-sm">
-          <div>
-            <h4 class="font-bold text-sm text-gray-800">${page.title}</h4>
-            <span class="text-xs text-gray-400 font-mono">?page=${page.slug}</span>
-          </div>
-          <button onclick='editPage(${JSON.stringify(page)})' class="bg-blue-100 hover:bg-blue-200 text-blue-600 text-xs px-3 py-1.5 rounded font-bold">Edit</button>
-        </div>
-      `).join('');
-    }
-
-    function openPageForm() {
-      document.getElementById('page-id').value = '';
-      document.getElementById('page-title-input').value = '';
-      document.getElementById('page-slug').value = '';
-      document.getElementById('page-content-input').value = '';
-      document.getElementById('page-modal-title').innerText = 'Buat Halaman Kustom Baru';
-      document.getElementById('page-modal').classList.remove('hidden');
-    }
-
-    function editPage(page) {
-      document.getElementById('page-id').value = page.id;
-      document.getElementById('page-title-input').value = page.title;
-      document.getElementById('page-slug').value = page.slug;
-      document.getElementById('page-content-input').value = page.content;
-      document.getElementById('page-modal-title').innerText = 'Edit Halaman Kustom';
-      document.getElementById('page-modal').classList.remove('hidden');
-    }
-
-    function closePageModal() { document.getElementById('page-modal').classList.add('hidden'); }
-
-    async function savePage() {
-      const payload = {
-        id: document.getElementById('page-id').value || null,
-        title: document.getElementById('page-title-input').value,
-        slug: document.getElementById('page-slug').value,
-        content: document.getElementById('page-content-input').value
-      };
-
-      try {
-        const res = await fetch(`${API_URL}/pages/save`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-API-KEY': token },
-          body: JSON.stringify(payload)
-        }).then(r => r.json());
-
-        if (res.status === 'success') {
-          alert('Halaman kustom berhasil disimpan!');
-          closePageModal();
-          loadAllData();
-        }
-      } catch (err) {
-        alert('Gagal menyimpan halaman.');
-      }
-    }
-
-    // --- TAB 6: PENGELOLA TESTIMONI ---
-    function renderTestimonialsTab(settings) {
-      const container = document.getElementById('testimonials-list-container');
-      const testiSetting = settings.find(s => s.setting_key === 'testimonials');
-
-      try {
-        globalTestimonials = testiSetting ? JSON.parse(testiSetting.setting_value) : [];
-      } catch (e) {
-        globalTestimonials = [];
-      }
-
-      container.innerHTML = globalTestimonials.map((item, idx) => `
-        <div class="border border-gray-200 p-4 rounded-lg bg-gray-50 flex flex-col justify-between shadow-sm relative">
-          <div>
-            <div class="flex text-amber-400 mb-2">
-              ${Array.from({ length: item.stars }, () => '<i class="fa-solid fa-star text-xs"></i>').join('')}
-            </div>
-            <p class="text-xs italic text-gray-600 mb-2 leading-relaxed">"${item.comment}"</p>
-            <div class="font-bold text-xs text-gray-800">- ${item.name}</div>
-          </div>
-          <div class="flex space-x-2 mt-4 justify-end">
-            <button onclick="editTestimonial(${idx})" class="text-blue-600 hover:text-blue-800 text-xs font-semibold"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
-            <button onclick="deleteTestimonial(${idx})" class="text-red-500 hover:text-red-700 text-xs font-semibold ml-2"><i class="fa-solid fa-trash"></i> Hapus</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function openTestimonialForm() {
-      document.getElementById('testimonial-index').value = '';
-      document.getElementById('testi-name').value = '';
-      document.getElementById('testi-stars').value = '5';
-      document.getElementById('testi-comment').value = '';
-      document.getElementById('testimonial-modal-title').innerText = 'Tambah Testimoni';
-      document.getElementById('testimonial-modal').classList.remove('hidden');
-    }
-
-    function editTestimonial(idx) {
-      const item = globalTestimonials[idx];
-      document.getElementById('testimonial-index').value = idx;
-      document.getElementById('testi-name').value = item.name;
-      document.getElementById('testi-stars').value = item.stars;
-      document.getElementById('testi-comment').value = item.comment;
-      document.getElementById('testimonial-modal-title').innerText = 'Edit Testimoni';
-      document.getElementById('testimonial-modal').classList.remove('hidden');
-    }
-
-    function closeTestimonialModal() { document.getElementById('testimonial-modal').classList.add('hidden'); }
-
-    function deleteTestimonial(idx) {
-      if (confirm('Apakah Anda yakin ingin menghapus testimoni ini?')) {
-        globalTestimonials.splice(idx, 1);
-        saveTestimonialsState();
-      }
-    }
-
-    async function saveTestimonial() {
-      const idx = document.getElementById('testimonial-index').value;
-      const data = {
-        name: document.getElementById('testi-name').value,
-        stars: parseInt(document.getElementById('testi-stars').value),
-        comment: document.getElementById('testi-comment').value
-      };
-
-      if (idx !== '') {
-        globalTestimonials[idx] = data; // Update
-      } else {
-        globalTestimonials.push(data); // Create
-      }
-
-      await saveTestimonialsState();
-      closeTestimonialModal();
-    }
-
-    async function saveTestimonialsState() {
-      const payload = [{
-        key: 'testimonials',
-        value: JSON.stringify(globalTestimonials)
-      }];
-
-      try {
-        const res = await fetch(`${API_URL}/settings/update`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-API-KEY': token },
-          body: JSON.stringify(payload)
-        }).then(r => r.json());
-
-        if (res.status === 'success') {
-          alert('Data testimoni berhasil disinkronkan!');
-          loadAllData();
-        }
-      } catch (err) {
-        alert('Gagal menyinkronkan testimoni.');
-      }
-    }
-
-    // --- HELPER OTOMATIS GENERATE SLUG ---
-    function autoGenerateSlug(title, targetId) {
-      const slug = title.toLowerCase()
-        .replace(/[^a-z0-9 -]/g, '') 
-        .replace(/\s+/g, '-')       
-        .replace(/-+/g, '-');       
-      document.getElementById(targetId).value = slug;
-    }
-
-    // --- INTEGRASI UNGHAH CLOUDINARY ---
-    async function uploadToCloudinary(input, targetInputId) {
-      const file = input.files[0];
-      if (!file) return;
-
-      const statusSpan = document.getElementById('upload-status-room');
-      statusSpan.innerText = 'Mengunggah ke Cloudinary...';
-
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', CLOUDINARY_PRESET);
-
-      try {
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-          method: 'POST',
-          body: formData
-        }).then(r => r.json());
-
-        if (res.secure_url) {
-          document.getElementById(targetInputId).value = res.secure_url;
-          statusSpan.innerText = 'Unggah Berhasil!';
-        } else {
-          statusSpan.innerText = 'Unggah gagal, periksa preset Anda.';
-        }
-      } catch (err) {
-        statusSpan.innerText = 'Error Jaringan Cloudinary.';
-      }
-    }
-
-    // --- SISTEM SWITCH TAB VISUAL ---
-    function switchTab(tab) {
-      const tabs = ['settings', 'menu', 'rooms', 'posts', 'pages', 'testimonials'];
-      tabs.forEach(t => {
-        const element = document.getElementById(`section-${t}`);
-        const button = document.getElementById(`tab-${t}`);
-        if (t === tab) {
-          element.classList.remove('hidden');
-          button.className = "border-b-2 border-blue-600 pb-3 px-4 font-bold text-blue-600 outline-none transition";
-        } else {
-          element.classList.add('hidden');
-          button.className = "border-b-2 border-transparent pb-3 px-4 font-semibold text-gray-500 hover:text-gray-700 outline-none transition";
-        }
-      });
-    }
-  </script>
+  <!-- SCRIPT ADMIN UTAMA -->
+  <script src="admin.js"></script>
 </body>
 </html>
