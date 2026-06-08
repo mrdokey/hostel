@@ -1,12 +1,15 @@
 const API_URL = 'https://wa.mrdsolution.my.id/cms-api/api';
 let token = '';
 
-// Kredensial dinamis yang akan di-overwrite oleh data dari database setelah login sukses
 let CLOUDINARY_CLOUD_NAME = 'dnobafum2'; 
-let CLOUDINARY_PRESET = ''; 
+let CLOUDINARY_PRESET = 'Hostel_Jacky'; 
 
 let globalSettings = [];
 let globalTestimonials = [];
+
+// Instance Quill Editor
+let quillPostEditor = null;
+let quillPageEditor = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   const savedToken = localStorage.getItem('cms_admin_token');
@@ -16,10 +19,33 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// Inisialisasi Quill Editor Sekali Saja
+function initQuillEditors() {
+  const toolbarOptions = [
+    [{ 'header': [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline'],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    ['clean']
+  ];
+
+  if (!quillPostEditor) {
+    quillPostEditor = new Quill('#post-editor', {
+      theme: 'snow',
+      modules: { toolbar: toolbarOptions }
+    });
+  }
+  
+  if (!quillPageEditor) {
+    quillPageEditor = new Quill('#page-editor', {
+      theme: 'snow',
+      modules: { toolbar: toolbarOptions }
+    });
+  }
+}
+
 async function attemptLogin() {
   const inputToken = document.getElementById('input-token').value;
   try {
-    // Verifikasi Token ke Endpoint Dinamis MySQL di VPS Anda
     const res = await fetch(`${API_URL}/auth/verify`, {
       headers: { 'X-API-KEY': inputToken }
     }).then(r => r.json());
@@ -28,7 +54,6 @@ async function attemptLogin() {
       token = inputToken;
       localStorage.setItem('cms_admin_token', token);
       
-      // Ambil Konfigurasi Cloudinary secara dinamis dari database (Sangat Aman)
       const cloudNameItem = res.data.find(d => d.setting_key === 'cloudinary_cloud_name');
       const presetItem = res.data.find(d => d.setting_key === 'cloudinary_preset');
       
@@ -52,6 +77,7 @@ function logout() {
 function showDashboard() {
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('dashboard-screen').classList.remove('hidden');
+  initQuillEditors();
   loadAllData();
 }
 
@@ -71,7 +97,6 @@ async function loadAllData() {
       renderNavigationEditor(resSettings.data);
       renderTestimonialsTab(resSettings.data);
       
-      // Sinkronisasi Cloudinary ulang setelah reload dari localStorage jika belum ter-set
       const cloudNameItem = resSettings.data.find(d => d.setting_key === 'cloudinary_cloud_name');
       const presetItem = resSettings.data.find(d => d.setting_key === 'cloudinary_preset');
       if (cloudNameItem) CLOUDINARY_CLOUD_NAME = cloudNameItem.setting_value;
@@ -92,10 +117,16 @@ function fillSettingsForm(data) {
     const input = document.getElementById(`setting-${item.setting_key}`);
     if (input) input.value = item.setting_value;
   });
+  
+  // Isi input token sandi admin saat ini secara aman
+  const tokenField = document.getElementById('setting-admin_token');
+  if (tokenField) tokenField.value = token;
 }
 
 async function saveSettings() {
-  const keys = ['site_name', 'whatsapp_number', 'hero_title', 'hero_subtitle', 'slider_images', 'address', 'maps_iframe', 'instagram_toggle', 'instagram_embed_code'];
+  const keys = ['site_name', 'whatsapp_number', 'hero_title', 'hero_subtitle', 'slider_images', 'address', 'maps_iframe', 'instagram_toggle', 'instagram_embed_code', 'favicon_url', 'admin_token'];
+  
+  const newToken = document.getElementById('setting-admin_token').value;
   const payload = keys.map(key => ({
     key: key,
     value: document.getElementById(`setting-${key}`).value
@@ -108,13 +139,19 @@ async function saveSettings() {
       body: JSON.stringify(payload)
     }).then(r => r.json());
 
-    if (res.status === 'success') alert('Pengaturan umum berhasil disimpan!');
+    if (res.status === 'success') {
+      alert('Pengaturan umum dan password berhasil diperbarui!');
+      // Update token lokal agar admin tidak ter-logout otomatis saat password ganti
+      token = newToken;
+      localStorage.setItem('cms_admin_token', token);
+      loadAllData();
+    }
   } catch (err) {
     alert('Gagal menyimpan.');
   }
 }
 
-// --- TAB 2: MENU NAVIGASI ---
+// --- TAB 2: MENU NAVIGASI DENGAN SUPORT SUB-MENU ---
 function renderNavigationEditor(settings) {
   const container = document.getElementById('nav-editor-container');
   const menuSetting = settings.find(s => s.setting_key === 'navigation_menu');
@@ -126,23 +163,81 @@ function renderNavigationEditor(settings) {
     menuList = [];
   }
 
-  container.innerHTML = menuList.map((item, idx) => `
-    <div class="flex space-x-4 items-center bg-gray-50 p-3 rounded-lg border border-gray-100 nav-row">
-      <input type="text" placeholder="Nama Menu (Label)" value="${item.label}" class="px-3 py-1.5 border rounded flex-1 text-sm nav-label outline-none">
-      <input type="text" placeholder="Tautan (URL)" value="${item.url}" class="px-3 py-1.5 border rounded flex-1 text-xs font-mono nav-url outline-none">
-      <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 text-sm"><i class="fa-solid fa-trash"></i></button>
-    </div>
-  `).join('');
+  // Merender daftar menu ke dalam baris taktis editor
+  container.innerHTML = menuList.map((item, idx) => {
+    if (item.children && item.children.length > 0) {
+      // Baris jika menu ini adalah Dropdown Group
+      return `
+        <div class="border-2 border-dashed border-blue-200 p-4 rounded-xl bg-blue-50/30 nav-row" data-type="parent">
+          <div class="flex space-x-4 items-center mb-3">
+            <span class="text-xs font-bold text-blue-600 uppercase">MENU UTAMA (DROPDOWN)</span>
+            <input type="text" placeholder="Nama Menu Dropdown" value="${item.label}" class="px-3 py-1.5 border rounded flex-1 text-sm nav-label outline-none font-bold">
+            <button onclick="this.parentElement.parentElement.remove()" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+          </div>
+          <div class="sub-rows-container space-y-2 pl-6">
+            ${item.children.map(sub => `
+              <div class="flex space-x-4 items-center bg-white p-2 rounded-lg border border-gray-150 sub-row">
+                <input type="text" placeholder="Nama Sub-Menu" value="${sub.label}" class="px-3 py-1 border rounded flex-1 text-xs sub-label outline-none">
+                <input type="text" placeholder="Tautan URL" value="${sub.url}" class="px-3 py-1 border rounded flex-1 text-xs font-mono sub-url outline-none">
+                <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-circle-minus"></i></button>
+              </div>
+            `).join('')}
+          </div>
+          <button onclick="addSubNavigationRow(this)" class="mt-2 text-xs text-blue-600 font-bold hover:underline">+ Tambah Anggota Sub-Menu</button>
+        </div>
+      `;
+    }
+    
+    // Baris jika menu mandiri standar
+    return `
+      <div class="flex space-x-4 items-center bg-gray-50 p-3 rounded-lg border border-gray-100 nav-row" data-type="single">
+        <input type="text" placeholder="Nama Menu (Label)" value="${item.label}" class="px-3 py-1.5 border rounded flex-1 text-sm nav-label outline-none">
+        <input type="text" placeholder="Tautan (URL)" value="${item.url}" class="px-3 py-1.5 border rounded flex-1 text-xs font-mono nav-url outline-none">
+        <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 text-sm"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    `;
+  }).join('');
 }
 
 function addNavigationRow() {
   const container = document.getElementById('nav-editor-container');
   const div = document.createElement('div');
-  div.className = "flex space-x-4 items-center bg-gray-50 p-3 rounded-lg border border-gray-100 nav-row";
+  
+  // Konfirmasi tipe menu
+  const isDropdown = confirm("Apakah Anda ingin membuat Dropdown Group (Menu bertingkat)?\n\nKlik OK untuk membuat Dropdown,\nKlik CANCEL untuk membuat Menu Mandiri biasa.");
+  
+  if (isDropdown) {
+    div.className = "border-2 border-dashed border-blue-200 p-4 rounded-xl bg-blue-50/30 nav-row";
+    div.setAttribute('data-type', 'parent');
+    div.innerHTML = `
+      <div class="flex space-x-4 items-center mb-3">
+        <span class="text-xs font-bold text-blue-600 uppercase">MENU UTAMA (DROPDOWN)</span>
+        <input type="text" placeholder="Nama Menu Dropdown" class="px-3 py-1.5 border rounded flex-1 text-sm nav-label outline-none font-bold">
+        <button onclick="this.parentElement.parentElement.remove()" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+      </div>
+      <div class="sub-rows-container space-y-2 pl-6"></div>
+      <button onclick="addSubNavigationRow(this)" class="mt-2 text-xs text-blue-600 font-bold hover:underline">+ Tambah Anggota Sub-Menu</button>
+    `;
+  } else {
+    div.className = "flex space-x-4 items-center bg-gray-50 p-3 rounded-lg border border-gray-100 nav-row";
+    div.setAttribute('data-type', 'single');
+    div.innerHTML = `
+      <input type="text" placeholder="Nama Menu (Label)" class="px-3 py-1.5 border rounded flex-1 text-sm nav-label outline-none">
+      <input type="text" placeholder="Tautan (URL)" class="px-3 py-1.5 border rounded flex-1 text-xs font-mono nav-url outline-none">
+      <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 text-sm"><i class="fa-solid fa-trash"></i></button>
+    `;
+  }
+  container.appendChild(div);
+}
+
+function addSubNavigationRow(btnElement) {
+  const container = btnElement.parentElement.querySelector('.sub-rows-container');
+  const div = document.createElement('div');
+  div.className = "flex space-x-4 items-center bg-white p-2 rounded-lg border border-gray-150 sub-row";
   div.innerHTML = `
-    <input type="text" placeholder="Nama Menu (Label)" class="px-3 py-1.5 border rounded flex-1 text-sm nav-label outline-none">
-    <input type="text" placeholder="Tautan (URL)" class="px-3 py-1.5 border rounded flex-1 text-xs font-mono nav-url outline-none">
-    <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 text-sm"><i class="fa-solid fa-trash"></i></button>
+    <input type="text" placeholder="Nama Sub-Menu" class="px-3 py-1 border rounded flex-1 text-xs sub-label outline-none">
+    <input type="text" placeholder="Tautan URL" class="px-3 py-1 border rounded flex-1 text-xs font-mono sub-url outline-none">
+    <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-circle-minus"></i></button>
   `;
   container.appendChild(div);
 }
@@ -152,10 +247,29 @@ async function saveNavigationMenu() {
   const menuData = [];
 
   rows.forEach(row => {
+    const type = row.getAttribute('data-type');
     const label = row.querySelector('.nav-label').value;
-    const url = row.querySelector('.nav-url').value;
-    if (label && url) {
-      menuData.push({ label, url });
+
+    if (type === 'single') {
+      const url = row.querySelector('.nav-url').value;
+      if (label && url) {
+        menuData.push({ label, url });
+      }
+    } else if (type === 'parent') {
+      const subRows = row.querySelectorAll('.sub-row');
+      const children = [];
+      
+      subRows.forEach(sub => {
+        const subLabel = sub.querySelector('.sub-label').value;
+        const subUrl = sub.querySelector('.sub-url').value;
+        if (subLabel && subUrl) {
+          children.push({ label: subLabel, url: subUrl });
+        }
+      });
+
+      if (label) {
+        menuData.push({ label, children });
+      }
     }
   });
 
@@ -168,7 +282,7 @@ async function saveNavigationMenu() {
       body: JSON.stringify(payload)
     }).then(r => r.json());
 
-    if (res.status === 'success') alert('Susunan navigasi berhasil disimpan!');
+    if (res.status === 'success') alert('Susunan navigasi bertingkat berhasil disimpan!');
   } catch (err) {
     alert('Gagal menyimpan.');
   }
@@ -242,7 +356,7 @@ async function saveRoom() {
   }
 }
 
-// --- TAB 4: ARTIKEL & PROMO ---
+// --- TAB 4: ARTIKEL & PROMO (DENGAN WYSIWYG) ---
 function renderPostsList(posts) {
   const container = document.getElementById('posts-list-container');
   container.innerHTML = posts.map(post => `
@@ -260,7 +374,7 @@ function openPostForm() {
   document.getElementById('post-id').value = '';
   document.getElementById('post-title').value = '';
   document.getElementById('post-slug').value = '';
-  document.getElementById('post-content').value = '';
+  quillPostEditor.root.innerHTML = ''; // Reset WYSIWYG
   document.getElementById('post-status').value = 'Published';
   document.getElementById('post-modal-title').innerText = 'Tulis Artikel Baru';
   document.getElementById('post-modal').classList.remove('hidden');
@@ -270,7 +384,7 @@ function editPost(post) {
   document.getElementById('post-id').value = post.id;
   document.getElementById('post-title').value = post.title;
   document.getElementById('post-slug').value = post.slug;
-  document.getElementById('post-content').value = post.content;
+  quillPostEditor.root.innerHTML = post.content || ''; // Masukkan data ke WYSIWYG
   document.getElementById('post-status').value = post.status;
   document.getElementById('post-modal-title').innerText = 'Edit Artikel';
   document.getElementById('post-modal').classList.remove('hidden');
@@ -283,7 +397,7 @@ async function savePost() {
     id: document.getElementById('post-id').value || null,
     title: document.getElementById('post-title').value,
     slug: document.getElementById('post-slug').value,
-    content: document.getElementById('post-content').value,
+    content: quillPostEditor.root.innerHTML, // Ambil HTML dari WYSIWYG
     status: document.getElementById('post-status').value
   };
 
@@ -304,7 +418,7 @@ async function savePost() {
   }
 }
 
-// --- TAB 5: HALAMAN KUSTOM ---
+// --- TAB 5: HALAMAN KUSTOM (DENGAN WYSIWYG) ---
 function renderPagesList(pages) {
   const container = document.getElementById('pages-list-container');
   container.innerHTML = pages.map(page => `
@@ -322,8 +436,8 @@ function openPageForm() {
   document.getElementById('page-id').value = '';
   document.getElementById('page-title-input').value = '';
   document.getElementById('page-slug').value = '';
-  document.getElementById('page-content-input').value = '';
-  document.getElementById('page-modal-title').innerText = 'Buat Halaman Baru';
+  quillPageEditor.root.innerHTML = ''; // Reset WYSIWYG
+  document.getElementById('page-modal-title').innerText = 'Buat Halaman Kustom Baru';
   document.getElementById('page-modal').classList.remove('hidden');
 }
 
@@ -331,8 +445,8 @@ function editPage(page) {
   document.getElementById('page-id').value = page.id;
   document.getElementById('page-title-input').value = page.title;
   document.getElementById('page-slug').value = page.slug;
-  document.getElementById('page-content-input').value = page.content;
-  document.getElementById('page-modal-title').innerText = 'Edit Halaman';
+  quillPageEditor.root.innerHTML = page.content || ''; // Masukkan ke WYSIWYG
+  document.getElementById('page-modal-title').innerText = 'Edit Halaman Kustom';
   document.getElementById('page-modal').classList.remove('hidden');
 }
 
@@ -343,7 +457,7 @@ async function savePage() {
     id: document.getElementById('page-id').value || null,
     title: document.getElementById('page-title-input').value,
     slug: document.getElementById('page-slug').value,
-    content: document.getElementById('page-content-input').value
+    content: quillPageEditor.root.innerHTML // Ambil HTML dari WYSIWYG
   };
 
   try {
@@ -354,16 +468,16 @@ async function savePage() {
     }).then(r => r.json());
 
     if (res.status === 'success') {
-      alert('Halaman berhasil disimpan!');
+      alert('Halaman kustom berhasil disimpan!');
       closePageModal();
       loadAllData();
     }
   } catch (err) {
-    alert('Gagal menyimpan.');
+    alert('Gagal menyimpan halaman.');
   }
 }
 
-// --- TAB 6: TESTIMONI ---
+// --- TAB 6: PENGELOLA TESTIMONI ---
 function renderTestimonialsTab(settings) {
   const container = document.getElementById('testimonials-list-container');
   const testiSetting = settings.find(s => s.setting_key === 'testimonials');
@@ -463,13 +577,13 @@ function autoGenerateSlug(title, targetId) {
   document.getElementById(targetId).value = slug;
 }
 
-// --- LOGIKA CLOUDINARY UPLOAD DENGAN KREDENSIAL DINAMIS DARI DATABASE ---
+// --- CLOUDINARY UPLOAD ---
 async function uploadToCloudinary(input, targetInputId) {
   const file = input.files[0];
   if (!file) return;
 
   const statusSpan = document.getElementById('upload-status-room');
-  statusSpan.innerText = 'Mengunggah ke Cloudinary...';
+  if (statusSpan) statusSpan.innerText = 'Mengunggah ke Cloudinary...';
 
   const formData = new FormData();
   formData.append('file', file);
@@ -483,12 +597,12 @@ async function uploadToCloudinary(input, targetInputId) {
 
     if (res.secure_url) {
       document.getElementById(targetInputId).value = res.secure_url;
-      statusSpan.innerText = 'Unggah Berhasil!';
+      if (statusSpan) statusSpan.innerText = 'Unggah Berhasil!';
     } else {
-      statusSpan.innerText = 'Gagal, periksa Upload Preset Anda.';
+      if (statusSpan) statusSpan.innerText = 'Gagal upload.';
     }
   } catch (err) {
-    statusSpan.innerText = 'Error jaringan Cloudinary.';
+    if (statusSpan) statusSpan.innerText = 'Error jaringan.';
   }
 }
 

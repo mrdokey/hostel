@@ -3,19 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hostel Admin Panel</title>
+  <title>CMS Admin Panel</title>
+  <!-- Quill Snow WYSIWYG Editor Style -->
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans min-h-screen">
 
-  <!-- 1. LOGIN SCREEN -->
+  <!-- LOGIN SCREEN -->
   <div id="login-screen" class="flex items-center justify-center min-h-screen bg-gray-950 px-4">
     <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
       <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Admin Login Portal</h2>
       <div class="mb-4">
         <label class="block text-sm font-semibold mb-2">Token Akses Admin</label>
-        <input type="password" id="input-token" placeholder="Masukkan token keamanan..." class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+        <input type="password" id="input-token" placeholder="Masukkan token..." class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
       </div>
       <button onclick="attemptLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition shadow-md">
         Masuk Ke Panel
@@ -24,7 +26,7 @@
     </div>
   </div>
 
-  <!-- 2. MAIN DASHBOARD CONTENT -->
+  <!-- DASHBOARD MAIN CONTAINER -->
   <div id="dashboard-screen" class="hidden">
     <!-- NAVBAR -->
     <nav class="bg-white border-b border-gray-200 py-4 px-6 flex justify-between items-center shadow-sm">
@@ -55,7 +57,7 @@
               <input type="text" id="setting-site_name" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
             <div>
-              <label class="block text-sm font-semibold mb-2">Nomor WhatsApp Admin (Contoh: 628123...)</label>
+              <label class="block text-sm font-semibold mb-2">WhatsApp Kontak Admin (Format: 628123...)</label>
               <input type="text" id="setting-whatsapp_number" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
             <div class="md:col-span-2">
@@ -66,7 +68,19 @@
               <label class="block text-sm font-semibold mb-2">Sub-judul Halaman Depan (Hero Subtitle)</label>
               <textarea id="setting-hero_subtitle" rows="2" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
             </div>
-            <div class="md:col-span-2">
+            <!-- FITUR GANTI PASWORD/TOKEN -->
+            <div class="md:col-span-2 border-t pt-4">
+              <label class="block text-sm font-semibold mb-1 text-red-600">Ganti Token / Password Akses Admin</label>
+              <p class="text-xs text-gray-500 mb-2">Awas! Setelah disimpan, Anda harus login ulang menggunakan password baru ini.</p>
+              <input type="text" id="setting-admin_token" class="w-full px-4 py-2 border border-red-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500">
+            </div>
+            <!-- FITUR EDIT FAVICON -->
+            <div class="md:col-span-2 border-t pt-4">
+              <label class="block text-sm font-semibold mb-1">Favicon Website (Ikon Tab Browser)</label>
+              <input type="text" id="setting-favicon_url" class="w-full px-4 py-2 border rounded-lg outline-none text-xs font-mono">
+              <input type="file" onchange="uploadToCloudinary(this, 'setting-favicon_url')" class="mt-2 text-xs">
+            </div>
+            <div class="md:col-span-2 border-t pt-4">
               <label class="block text-sm font-semibold mb-2">Gambar Slider Depan (Pisahkan tautan link dengan tanda koma)</label>
               <textarea id="setting-slider_images" rows="3" placeholder="https://link-gambar1.com, https://link-gambar2.com" class="w-full px-4 py-2 border rounded-lg text-xs font-mono outline-none focus:ring-2 focus:ring-blue-500"></textarea>
             </div>
@@ -99,7 +113,7 @@
       <!-- ==================== TAB 2: MENU NAVIGATION ==================== -->
       <section id="section-menu" class="hidden bg-white p-8 rounded-xl shadow-sm border border-gray-200">
         <h2 class="text-xl font-bold mb-2 text-gray-800"><i class="fa-solid fa-compass mr-2 text-blue-600"></i>Menu Navigasi Header</h2>
-        <p class="text-sm text-gray-500 mb-6">Sesuaikan tautan di bar menu atas. Gunakan `?page=slug-halaman` untuk mengarah ke Halaman Kustom.</p>
+        <p class="text-sm text-gray-500 mb-6">Sesuaikan tautan di bar menu atas. Pilih apakah ingin menjadikannya Menu Mandiri atau Sub-menu (Dropdown).</p>
         <div id="nav-editor-container" class="space-y-4 mb-6"></div>
         <button onclick="addNavigationRow()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-4 py-2 rounded-lg text-sm transition">
           + Tambah Baris Baru
@@ -112,7 +126,7 @@
       <!-- ==================== TAB 3: KATALOG KAMAR ==================== -->
       <section id="section-rooms" class="hidden bg-white p-8 rounded-xl shadow-sm border border-gray-200">
         <div class="flex justify-between items-center mb-6">
-          <h2 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-bed mr-2 text-blue-600"></i>Katalog Kamar Hostel</h2>
+          <h2 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-bed mr-2 text-blue-600"></i>Katalog Kamar</h2>
           <button onclick="openRoomForm()" class="bg-green-500 hover:bg-green-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition shadow-sm">
             + Tambah Tipe Kamar
           </button>
@@ -120,7 +134,7 @@
         <div id="rooms-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
 
         <!-- MODAL KAMAR -->
-        <div id="room-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 animate-fade-in">
+        <div id="room-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div class="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <h3 id="room-modal-title" class="text-xl font-bold mb-6 text-gray-800">Formulir Kamar</h3>
             <div class="space-y-4">
@@ -139,7 +153,7 @@
               <div>
                 <label class="block text-sm font-semibold mb-1">Link Gambar Kamar</label>
                 <input type="text" id="room-image" class="w-full px-4 py-2 border text-xs font-mono rounded-lg outline-none">
-                <input type="file" id="room-file-input" onchange="uploadToCloudinary(this, 'room-image')" class="mt-2 text-xs">
+                <input type="file" onchange="uploadToCloudinary(this, 'room-image')" class="mt-2 text-xs">
                 <span id="upload-status-room" class="text-xs text-blue-500 ml-2"></span>
               </div>
               <div>
@@ -162,7 +176,7 @@
       <!-- ==================== TAB 4: ARTIKEL & PROMO ==================== -->
       <section id="section-posts" class="hidden bg-white p-8 rounded-xl shadow-sm border border-gray-200">
         <div class="flex justify-between items-center mb-6">
-          <h2 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-bullhorn mr-2 text-blue-600"></i>Artikel & Berita</h2>
+          <h2 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-bullhorn mr-2 text-blue-600"></i>Katalog Promo & Artikel</h2>
           <button onclick="openPostForm()" class="bg-green-500 hover:bg-green-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition shadow-sm">
             + Tulis Artikel Baru
           </button>
@@ -184,10 +198,11 @@
                 <input type="text" id="post-slug" readonly class="w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-500 outline-none">
               </div>
               <div>
-                <label class="block text-sm font-semibold mb-1">Konten Deskripsi (HTML Diperbolehkan)</label>
-                <textarea id="post-content" rows="6" class="w-full p-3 border rounded-lg outline-none text-sm"></textarea>
+                <label class="block text-sm font-semibold mb-1">Konten Deskripsi (Visual WYSIWYG)</label>
+                <!-- Container untuk Quill Editor -->
+                <div id="post-editor" class="bg-white" style="height: 250px;"></div>
               </div>
-              <div>
+              <div class="pt-12">
                 <label class="block text-sm font-semibold mb-1">Status</label>
                 <select id="post-status" class="w-full px-4 py-2 border rounded-lg outline-none">
                   <option value="Published">Published</option>
@@ -216,7 +231,7 @@
         <!-- MODAL PAGE -->
         <div id="page-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div class="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <h3 id="page-modal-title" class="text-xl font-bold mb-6">Formulir Halaman Baru</h3>
+            <h3 id="page-modal-title" class="text-xl font-bold mb-6">Formulir Halaman</h3>
             <div class="space-y-4">
               <input type="hidden" id="page-id">
               <div>
@@ -228,11 +243,12 @@
                 <input type="text" id="page-slug" readonly class="w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-500 outline-none">
               </div>
               <div>
-                <label class="block text-sm font-semibold mb-1">Konten Halaman (HTML Diperbolehkan)</label>
-                <textarea id="page-content-input" rows="8" class="w-full p-3 border rounded-lg outline-none text-sm"></textarea>
+                <label class="block text-sm font-semibold mb-1">Konten Halaman (Visual WYSIWYG)</label>
+                <!-- Container untuk Quill Editor -->
+                <div id="page-editor" class="bg-white" style="height: 300px;"></div>
               </div>
             </div>
-            <div class="mt-8 flex space-x-4 justify-end">
+            <div class="mt-12 flex space-x-4 justify-end">
               <button onclick="closePageModal()" class="bg-gray-400 text-white px-4 py-2 rounded-lg text-sm">Batal</button>
               <button onclick="savePage()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold">Simpan Halaman</button>
             </div>
@@ -285,7 +301,9 @@
     </div>
   </div>
 
-  <!-- SCRIPT ADMIN UTAMA -->
+  <!-- Quill Rich Editor JS Library -->
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+  <!-- LINK SCRIPT UTAMA ADMIN -->
   <script src="admin.js"></script>
 </body>
 </html>

@@ -1,9 +1,15 @@
 const API_URL = 'https://wa.mrdsolution.my.id/cms-api/api';
-const API_TOKEN = 'RAHASIA_CMS_HOSTEL_123'; // Ini bisa diabaikan di sisi publik jika token di DB sudah Anda ganti
+const API_TOKEN = 'RAHASIA_CMS_HOSTEL_123';
 let slideIndex = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
   handleRouting();
+  // Menutup semua dropdown jika klik di luar area navigasi
+  window.addEventListener('click', (e) => {
+    if (!e.target.closest('.dropdown-trigger') && !e.target.closest('.dropdown-menu')) {
+      document.querySelectorAll('.dropdown-menu').forEach(el => el.classList.add('hidden'));
+    }
+  });
 });
 
 function toggleMobileMenu() {
@@ -55,9 +61,7 @@ async function fetchFreshData() {
 
     if (resSettings.status === 'success') {
       const settingsObj = {};
-      resSettings.data.forEach(item => {
-        settingsObj[item.setting_key] = item.setting_value;
-      });
+      resSettings.data.forEach(item => { settingsObj[item.setting_key] = item.setting_value; });
       localStorage.setItem('cms_settings', JSON.stringify(settingsObj));
       renderSettings(settingsObj);
     }
@@ -70,7 +74,7 @@ async function fetchFreshData() {
       renderPosts(resPosts.data);
     }
   } catch (err) {
-    console.error('Gagal mengambil data segar:', err);
+    console.error('Gagal sinkronisasi:', err);
   }
 }
 
@@ -91,12 +95,12 @@ async function loadPageContent(slug) {
         document.getElementById('page-title').innerText = page.title;
         document.getElementById('page-content').innerHTML = page.content;
       } else {
-        document.getElementById('page-title').innerText = 'Halaman Tidak Ditemukan';
-        document.getElementById('page-content').innerHTML = '<p>Maaf, halaman tidak ditemukan.</p>';
+        document.getElementById('page-title').innerText = '404';
+        document.getElementById('page-content').innerHTML = '<p>Halaman tidak ditemukan.</p>';
       }
     }
   } catch (err) {
-    console.error('Error load custom page:', err);
+    console.error(err);
   }
 }
 
@@ -106,12 +110,18 @@ function renderSettings(settings) {
   document.getElementById('footer-site-name').innerText = settings.site_name || 'Hostel';
   document.getElementById('footer-address').innerText = settings.address || '';
   
+  // Favicon Dinamis
+  if (settings.favicon_url) {
+    document.getElementById('favicon-link').href = settings.favicon_url;
+  }
+
   const waLink = settings.whatsapp_number ? `https://wa.me/${settings.whatsapp_number}` : '#';
   if (document.getElementById('btn-hero-wa')) document.getElementById('btn-hero-wa').href = waLink;
   document.getElementById('floating-wa').href = waLink;
 
   if (document.getElementById('maps-iframe')) document.getElementById('maps-iframe').src = settings.maps_iframe || '';
 
+  // Render Menu dengan Dropdown
   if (settings.navigation_menu) {
     try { renderNavigation(JSON.parse(settings.navigation_menu)); } catch (e) {}
   }
@@ -138,27 +148,55 @@ function renderSettings(settings) {
   }
 }
 
+// LOGIKA RENDER DROPDOWN NAVIGASI
 function renderNavigation(menuList) {
   const desktop = document.getElementById('desktop-menu');
   const mobile = document.getElementById('mobile-menu');
 
-  const htmlMenu = menuList.map(item => {
-    if (item.url.startsWith('?page=')) {
-      return `<a href="${item.url}" class="hover:text-blue-600 transition" onclick="setTimeout(handleRouting, 50)">${item.label}</a>`;
+  // Desktop Render
+  desktop.innerHTML = menuList.map((item, idx) => {
+    if (item.children && item.children.length > 0) {
+      // Jika memiliki sub-menu (Dropdown)
+      return `
+        <div class="relative dropdown-container">
+          <button onclick="toggleDropdown(${idx})" class="dropdown-trigger hover:text-blue-600 transition flex items-center space-x-1 outline-none">
+            <span>${item.label}</span> <i class="fa-solid fa-chevron-down text-xs"></i>
+          </button>
+          <div id="dropdown-${idx}" class="dropdown-menu hidden absolute left-0 mt-2 w-48 bg-white border border-gray-100 rounded-lg shadow-md py-2 text-sm z-50">
+            ${item.children.map(sub => `
+              <a href="${sub.url}" class="block px-4 py-2 hover:bg-gray-50 hover:text-blue-600 transition" ${sub.url.startsWith('?page=') ? 'onclick="setTimeout(handleRouting, 50)"' : ''}>${sub.label}</a>
+            `).join('')}
+          </div>
+        </div>
+      `;
     }
-    return `<a href="${item.url}" class="hover:text-blue-600 transition">${item.label}</a>`;
+    // Menu Standar
+    return `<a href="${item.url}" class="hover:text-blue-600 transition" ${item.url.startsWith('?page=') ? 'onclick="setTimeout(handleRouting, 50)"' : ''}>${item.label}</a>`;
   }).join('');
 
-  desktop.innerHTML = htmlMenu;
-  
-  const htmlMobileMenu = menuList.map(item => {
-    if (item.url.startsWith('?page=')) {
-      return `<a href="${item.url}" onclick="toggleMobileMenu(); setTimeout(handleRouting, 50)" class="hover:text-blue-600">${item.label}</a>`;
+  // Mobile Render (Accordion Style)
+  mobile.innerHTML = menuList.map((item, idx) => {
+    if (item.children && item.children.length > 0) {
+      return `
+        <div class="flex flex-col space-y-2">
+          <span class="text-gray-400 font-bold text-xs uppercase px-2">${item.label}</span>
+          <div class="flex flex-col space-y-2 pl-4">
+            ${item.children.map(sub => `
+              <a href="${sub.url}" onclick="toggleMobileMenu(); ${sub.url.startsWith('?page=') ? 'setTimeout(handleRouting, 50)' : ''}" class="hover:text-blue-600 text-sm">${sub.label}</a>
+            `).join('')}
+          </div>
+        </div>
+      `;
     }
-    return `<a href="${item.url}" onclick="toggleMobileMenu()" class="hover:text-blue-600">${item.label}</a>`;
+    return `<a href="${item.url}" onclick="toggleMobileMenu(); ${item.url.startsWith('?page=') ? 'setTimeout(handleRouting, 50)' : ''}" class="hover:text-blue-600">${item.label}</a>`;
   }).join('');
-  
-  mobile.innerHTML = htmlMobileMenu;
+}
+
+function toggleDropdown(idx) {
+  document.querySelectorAll('.dropdown-menu').forEach((el, i) => {
+    if (i !== idx) el.classList.add('hidden');
+  });
+  document.getElementById(`dropdown-${idx}`).classList.toggle('hidden');
 }
 
 function startSlider() {
