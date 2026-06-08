@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hostel Website</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+
+  <!-- HERO SECTION -->
+  <header class="bg-blue-600 text-white py-20 px-6 text-center">
+    <div class="max-w-4xl mx-auto">
+      <h1 id="hero-title" class="text-4xl md:text-6xl font-bold mb-4">Memuat...</h1>
+      <p id="hero-subtitle" class="text-lg md:text-xl text-blue-100 mb-8">Silakan tunggu sebentar...</p>
+      <a id="btn-wa" href="#" target="_blank" class="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition">
+        Hubungi Kami via WhatsApp
+      </a>
+    </div>
+  </header>
+
+  <!-- KATALOG KAMAR SECTION -->
+  <main class="max-w-6xl mx-auto py-12 px-6">
+    <section class="mb-16">
+      <h2 class="text-3xl font-bold text-center mb-8">Pilihan Kamar Terbaik</h2>
+      <div id="rooms-container" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Kamar akan dirender di sini oleh Javascript -->
+      </div>
+    </section>
+
+    <!-- ARTIKEL / PROMO SECTION -->
+    <section>
+      <h2 class="text-3xl font-bold text-center mb-8">Promo & Info Terbaru</h2>
+      <div id="posts-container" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Artikel akan dirender di sini oleh Javascript -->
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-gray-900 text-gray-400 py-8 px-6 text-center mt-20">
+    <div class="max-w-4xl mx-auto">
+      <p id="footer-address" class="mb-2">Alamat Hostel</p>
+      <p class="text-sm">&copy; <span id="footer-site-name">Hostel</span>. All Rights Reserved.</p>
+    </div>
+  </footer>
+
+  <!-- SCRIPT LOGIKA CMS & CACHING -->
+  <script>
+    // Konfigurasi Endpoint API VPS Anda
+    const API_URL = 'http://103.31.38.30:5000/api';
+    const API_TOKEN = 'RAHASIA_CMS_HOSTEL_123';
+
+    // 1. Inisialisasi Aplikasi & Render Cepat dari LocalStorage
+    document.addEventListener('DOMContentLoaded', () => {
+      loadCachedData();
+      fetchFreshData();
+    });
+
+    // 2. Fungsi Load Data dari Cache Lokal (LocalStorage) agar Loading Instan
+    function loadCachedData() {
+      const cachedSettings = localStorage.getItem('cms_settings');
+      const cachedRooms = localStorage.getItem('cms_rooms');
+      const cachedPosts = localStorage.getItem('cms_posts');
+
+      if (cachedSettings) renderSettings(JSON.parse(cachedSettings));
+      if (cachedRooms) renderRooms(JSON.parse(cachedRooms));
+      if (cachedPosts) renderPosts(JSON.parse(cachedPosts));
+    }
+
+    // 3. Ambil Data Segar dari API VPS di Latar Belakang
+    async function fetchFreshData() {
+      const headers = { 'X-API-KEY': API_TOKEN };
+
+      try {
+        const [resSettings, resRooms, resPosts] = await Promise.all([
+          fetch(`${API_URL}/settings`, { headers }).then(r => r.json()),
+          fetch(`${API_URL}/rooms`, { headers }).then(r => r.json()),
+          fetch(`${API_URL}/posts`, { headers }).then(r => r.json())
+        ]);
+
+        if (resSettings.status === 'success') {
+          // Ubah array settings menjadi object key-value
+          const settingsObj = {};
+          resSettings.data.forEach(item => {
+            settingsObj[item.setting_key] = item.setting_value;
+          });
+          localStorage.setItem('cms_settings', JSON.stringify(settingsObj));
+          renderSettings(settingsObj);
+        }
+
+        if (resRooms.status === 'success') {
+          localStorage.setItem('cms_rooms', JSON.stringify(resRooms.data));
+          renderRooms(resRooms.data);
+        }
+
+        if (resPosts.status === 'success') {
+          localStorage.setItem('cms_posts', JSON.stringify(resPosts.data));
+          renderPosts(resPosts.data);
+        }
+
+      } catch (error) {
+        console.error('Gagal mengambil data terbaru dari server:', error);
+      }
+    }
+
+    // 4. Fungsi Render Data ke Tampilan Web (HTML DOM)
+    function renderSettings(settings) {
+      if (!settings) return;
+      document.getElementById('hero-title').innerText = settings.hero_title || 'Selamat Datang';
+      document.getElementById('hero-subtitle').innerText = settings.hero_subtitle || '';
+      document.getElementById('footer-site-name').innerText = settings.site_name || 'Hostel';
+      document.getElementById('footer-address').innerText = settings.address || '';
+      
+      if (settings.whatsapp_number) {
+        document.getElementById('btn-wa').href = `https://wa.me/${settings.whatsapp_number}`;
+      }
+    }
+
+    function renderRooms(rooms) {
+      const container = document.getElementById('rooms-container');
+      if (!rooms || rooms.length === 0) return;
+      
+      container.innerHTML = rooms.map(room => `
+        <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 transition hover:shadow-lg">
+          <img src="${room.image_url}" alt="${room.room_type}" class="w-full h-48 object-cover">
+          <div class="p-6">
+            <h3 class="text-xl font-semibold mb-2">${room.room_type}</h3>
+            <p class="text-blue-600 font-bold text-lg mb-2">Rp ${parseInt(room.price_start_from).toLocaleString('id-ID')} / malam</p>
+            <p class="text-gray-600 text-sm mb-4">${room.description}</p>
+            <div class="text-xs text-gray-500 bg-gray-50 p-2 rounded border border-gray-100">
+              <strong>Fasilitas:</strong> ${room.amenities}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderPosts(posts) {
+      const container = document.getElementById('posts-container');
+      if (!posts || posts.length === 0) return;
+
+      container.innerHTML = posts.map(post => `
+        <div class="bg-white rounded-lg shadow-md p-6 border border-gray-100 transition hover:shadow-lg">
+          <h3 class="text-xl font-semibold mb-2">${post.title}</h3>
+          <div class="text-gray-600 text-sm mb-4">${post.content}</div>
+          <span class="text-xs text-gray-400">
+            Dipublikasikan pada: ${new Date(post.published_at).toLocaleDateString('id-ID')}
+          </span>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>
