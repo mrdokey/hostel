@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CMS Admin Panel - Hostel</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans min-h-screen">
+
+  <!-- 1. HALAMAN LOGIN (AKSES TOKEN) -->
+  <div id="login-screen" class="flex items-center justify-center min-h-screen bg-gray-900 px-4">
+    <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
+      <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Admin Login</h2>
+      <div class="mb-4">
+        <label class="block text-sm font-semibold mb-2">Token Akses Admin</label>
+        <input type="password" id="input-token" placeholder="Masukkan token keamanan..." class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+      </div>
+      <button onclick="attemptLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition">
+        Masuk ke Dashboard
+      </button>
+      <p id="login-error" class="text-red-500 text-sm mt-3 text-center hidden">Token salah! Akses ditolak.</p>
+    </div>
+  </div>
+
+  <!-- 2. HALAMAN UTAMA DASHBOARD (TERSEMBUNYI SEBELUM LOGIN) -->
+  <div id="dashboard-screen" class="hidden">
+    <!-- TOP NAVIGATION -->
+    <nav class="bg-white border-b border-gray-200 py-4 px-6 flex justify-between items-center shadow-sm">
+      <span class="text-xl font-bold text-blue-600">CMS Hostel Admin</span>
+      <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
+        Keluar
+      </button>
+    </nav>
+
+    <div class="max-w-6xl mx-auto py-10 px-6">
+      <!-- PILIHAN MENU TABS -->
+      <div class="flex space-x-4 border-b border-gray-200 mb-8 pb-px">
+        <button onclick="switchTab('settings')" id="tab-settings" class="border-b-2 border-blue-600 pb-3 px-4 font-bold text-blue-600 outline-none transition">Pengaturan Web</button>
+        <button onclick="switchTab('rooms')" id="tab-rooms" class="border-b-2 border-transparent pb-3 px-4 font-semibold text-gray-500 hover:text-gray-700 outline-none transition">Katalog Kamar</button>
+        <button onclick="switchTab('posts')" id="tab-posts" class="border-b-2 border-transparent pb-3 px-4 font-semibold text-gray-500 hover:text-gray-700 outline-none transition">Artikel & Promo</button>
+      </div>
+
+      <!-- ==================== TAB 1: PENGATURAN WEB ==================== -->
+      <section id="section-settings" class="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+        <h2 class="text-2xl font-bold mb-6">Ubah Informasi Website</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-semibold mb-2">Nama Website / Hostel</label>
+            <input type="text" id="setting-site_name" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold mb-2">Nomor WhatsApp Admin (Contoh: 628123456789)</label>
+            <input type="text" id="setting-whatsapp_number" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-semibold mb-2">Judul Utama Halaman Depan (Hero Title)</label>
+            <input type="text" id="setting-hero_title" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-semibold mb-2">Sub-judul Halaman Depan (Hero Subtitle)</label>
+            <textarea id="setting-hero_subtitle" rows="3" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-semibold mb-2">Alamat Hostel</label>
+            <input type="text" id="setting-address" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+          </div>
+        </div>
+        <button onclick="saveSettings()" class="mt-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition">
+          Simpan Pengaturan
+        </button>
+      </section>
+
+      <!-- ==================== TAB 2: KATALOG KAMAR ==================== -->
+      <section id="section-rooms" class="hidden bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold">Daftar Kamar Hostel</h2>
+          <button onclick="openRoomForm()" class="bg-green-500 hover:bg-green-600 text-white font-semibold px-4 py-2 rounded-lg transition">
+            + Tambah Kamar Baru
+          </button>
+        </div>
+
+        <!-- LIST KAMAR -->
+        <div id="rooms-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Item kamar akan dimuat di sini -->
+        </div>
+
+        <!-- FORM TAMBAH/EDIT KAMAR (MODAL TERSEMBUNYI) -->
+        <div id="room-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div class="bg-white p-8 rounded-xl shadow-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <h3 id="room-modal-title" class="text-xl font-bold mb-6">Formulir Kamar</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-semibold mb-2">ID Kamar (Contoh: RM-001)</label>
+                <input type="text" id="room-id" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-2">Tipe / Nama Kamar</label>
+                <input type="text" id="room-type" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-2">Harga Mulai Dari (Rp)</label>
+                <input type="number" id="room-price" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-2">Link Gambar Kamar (atau upload via Cloudinary)</label>
+                <input type="text" id="room-image" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                <!-- Fitur Upload Gambar Sederhana -->
+                <input type="file" id="room-file-input" onchange="uploadToCloudinary(this)" class="mt-2 text-xs">
+                <span id="upload-status" class="text-xs text-blue-500 ml-2"></span>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-2">Fasilitas Kamar (Pisahkan dengan koma)</label>
+                <input type="text" id="room-amenities" placeholder="AC, Wi-Fi, Kamar Mandi Dalam" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-2">Deskripsi Kamar</label>
+                <textarea id="room-desc" rows="3" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+              </div>
+            </div>
+            <div class="mt-8 flex space-x-4 justify-end">
+              <button onclick="closeRoomModal()" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition">Batal</button>
+              <button onclick="saveRoom()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">Simpan Kamar</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 3: ARTIKEL & PROMO ==================== -->
+      <section id="section-posts" class="hidden bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold">Daftar Berita & Promo</h2>
+          <button onclick="openPostForm()" class="bg-green-500 hover:bg-green-600 text-white font-semibold px-4 py-2 rounded-lg transition">
+            + Tulis Artikel Baru
+          </button>
+        </div>
+
+        <!-- LIST ARTIKEL -->
+        <div id="posts-list-container" class="space-y-4">
+          <!-- Item artikel akan dimuat di sini -->
+        </div>
+
+        <!-- FORM TAMBAH/EDIT POST (MODAL TERSEMBUNYI) -->
+        <div id="post-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div class="bg-white p-8 rounded-xl shadow-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <h3 id="post-modal-title" class="text-xl font-bold mb-6">Formulir Artikel</h3>
+            <div class="space-y-4">
+              <input type="hidden" id="post-id">
+              <div>
+                <label class="block text-sm font-semibold mb-2">Judul Artikel / Promo</label>
+                <input type="text" id="post-title" onkeyup="autoGenerateSlug(this.value)" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-2">URL Slug (Otomatis)</label>
+                <input type="text" id="post-slug" readonly class="w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-2">Isi Konten (Format HTML diizinkan)</label>
+                <textarea id="post-content" rows="6" placeholder="Tulis isi tulisan di sini..." class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-2">Status Publikasi</label>
+                <select id="post-status" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                  <option value="Published">Published (Tampil)</option>
+                  <option value="Draft">Draft (Arsip)</option>
+                </select>
+              </div>
+            </div>
+            <div class="mt-8 flex space-x-4 justify-end">
+              <button onclick="closePostModal()" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition">Batal</button>
+              <button onclick="savePost()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">Simpan Artikel</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- SCRIPT LOGIKA DASHBOARD ADMIN -->
+  <script>
+    const API_URL = 'https://wa.mrdsolution.my.id/cms-api/api';
+    let token = '';
+
+    // Akun Cloudinary Gratis Anda (Opsional jika ingin fitur upload langsung jalan)
+    const CLOUDINARY_CLOUD_NAME = 'NAMA_CLOUD_ANDA'; // Ganti dengan nama cloud Cloudinary Anda
+    const CLOUDINARY_PRESET = 'PRESET_UNSIGNED_ANDA'; // Ganti dengan unsigned preset Cloudinary Anda
+
+    // 1. Cek Apakah Sudah Pernah Login Sebelumnya
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedToken = localStorage.getItem('cms_admin_token');
+      if (savedToken) {
+        token = savedToken;
+        showDashboard();
+      }
+    });
+
+    // 2. Fungsi Login Akses
+    function attemptLogin() {
+      const inputToken = document.getElementById('input-token').value;
+      if (inputToken === 'RAHASIA_CMS_HOSTEL_123') { // Sesuai Token di API Node.js
+        token = inputToken;
+        localStorage.setItem('cms_admin_token', token);
+        showDashboard();
+      } else {
+        document.getElementById('login-error').classList.remove('hidden');
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('cms_admin_token');
+      location.reload();
+    }
+
+    function showDashboard() {
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('dashboard-screen').classList.remove('hidden');
+      loadAllData();
+    }
+
+    // 3. Tarik Semua Data Terkini dari Database VPS
+    async function loadAllData() {
+      const headers = { 'X-API-KEY': token };
+      try {
+        const [resSettings, resRooms, resPosts] = await Promise.all([
+          fetch(`${API_URL}/settings`, { headers }).then(r => r.json()),
+          fetch(`${API_URL}/rooms`, { headers }).then(r => r.json()),
+          fetch(`${API_URL}/posts`, { headers }).then(r => r.json())
+        ]);
+
+        if (resSettings.status === 'success') fillSettingsForm(resSettings.data);
+        if (resRooms.status === 'success') renderRoomsList(resRooms.data);
+        if (resPosts.status === 'success') renderPostsList(resPosts.data);
+      } catch (err) {
+        alert('Gagal memuat data dari server VPS. Pastikan token Anda benar.');
+        logout();
+      }
+    }
+
+    // --- LOGIKA TAB PENGATURAN WEB ---
+    function fillSettingsForm(data) {
+      data.forEach(item => {
+        const input = document.getElementById(`setting-${item.setting_key}`);
+        if (input) input.value = item.setting_value;
+      });
+    }
+
+    async function saveSettings() {
+      const keys = ['site_name', 'whatsapp_number', 'hero_title', 'hero_subtitle', 'address'];
+      const payload = keys.map(key => ({
+        key: key,
+        value: document.getElementById(`setting-${key}`).value
+      }));
+
+      try {
+        const res = await fetch(`${API_URL}/settings/update`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-API-KEY': token },
+          body: JSON.stringify(payload)
+        }).then(r => r.json());
+
+        if (res.status === 'success') alert('Pengaturan umum berhasil disimpan!');
+      } catch (err) {
+        alert('Gagal menyimpan pengaturan.');
+      }
+    }
+
+    // --- LOGIKA TAB KATALOG KAMAR ---
+    function renderRoomsList(rooms) {
+      const container = document.getElementById('rooms-list-container');
+      container.innerHTML = rooms.map(room => `
+        <div class="border border-gray-200 p-4 rounded-lg flex space-x-4 items-center bg-gray-50">
+          <img src="${room.image_url}" class="w-20 h-20 object-cover rounded">
+          <div class="flex-1">
+            <h4 class="font-bold">${room.room_type}</h4>
+            <p class="text-sm text-blue-600 font-semibold">Rp ${parseInt(room.price_start_from).toLocaleString('id-ID')}</p>
+          </div>
+          <button onclick='editRoom(${JSON.stringify(room)})' class="bg-blue-100 hover:bg-blue-200 text-blue-600 text-xs px-3 py-2 rounded font-bold">Edit</button>
+        </div>
+      `).join('');
+    }
+
+    function openRoomForm() {
+      document.getElementById('room-id').disabled = false;
+      document.getElementById('room-id').value = '';
+      document.getElementById('room-type').value = '';
+      document.getElementById('room-price').value = '';
+      document.getElementById('room-image').value = '';
+      document.getElementById('room-amenities').value = '';
+      document.getElementById('room-desc').value = '';
+      document.getElementById('room-modal-title').innerText = 'Tambah Kamar Baru';
+      document.getElementById('room-modal').classList.remove('hidden');
+    }
+
+    function editRoom(room) {
+      document.getElementById('room-id').value = room.id;
+      document.getElementById('room-id').disabled = true; // Kunci ID saat edit
+      document.getElementById('room-type').value = room.room_type;
+      document.getElementById('room-price').value = room.price_start_from;
+      document.getElementById('room-image').value = room.image_url;
+      document.getElementById('room-amenities').value = room.amenities;
+      document.getElementById('room-desc').value = room.description;
+      document.getElementById('room-modal-title').innerText = 'Edit Kamar';
+      document.getElementById('room-modal').classList.remove('hidden');
+    }
+
+    function closeRoomModal() {
+      document.getElementById('room-modal').classList.add('hidden');
+    }
+
+    async function saveRoom() {
+      const payload = {
+        id: document.getElementById('room-id').value,
+        room_type: document.getElementById('room-type').value,
+        price_start_from: document.getElementById('room-price').value,
+        image_url: document.getElementById('room-image').value,
+        amenities: document.getElementById('room-amenities').value,
+        description: document.getElementById('room-desc').value
+      };
+
+      try {
+        const res = await fetch(`${API_URL}/rooms/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-API-KEY': token },
+          body: JSON.stringify(payload)
+        }).then(r => r.json());
+
+        if (res.status === 'success') {
+          alert('Data kamar berhasil disimpan!');
+          closeRoomModal();
+          loadAllData();
+        }
+      } catch (err) {
+        alert('Gagal menyimpan data kamar.');
+      }
+    }
+
+    // --- FITUR UPLOAD CLOUDINARY ---
+    async function uploadToCloudinary(input) {
+      if (CLOUDINARY_CLOUD_NAME === 'NAMA_CLOUD_ANDA') {
+        alert('Konfigurasikan NAMA_CLOUD_ANDA terlebih dahulu di dalam kode script admin.html bagian atas.');
+        return;
+      }
+      const file = input.files[0];
+      if (!file) return;
+
+      const statusSpan = document.getElementById('upload-status');
+      statusSpan.innerText = 'Mengunggah...';
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUDINARY_PRESET);
+
+      try {
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+          method: 'POST',
+          body: formData
+        }).then(r => r.json());
+
+        if (res.secure_url) {
+          document.getElementById('room-image').value = res.secure_url;
+          statusSpan.innerText = 'Upload Sukses!';
+        } else {
+          statusSpan.innerText = 'Gagal Upload.';
+        }
+      } catch (err) {
+        statusSpan.innerText = 'Error Upload.';
+      }
+    }
+
+    // --- LOGIKA TAB ARTIKEL & PROMO ---
+    function renderPostsList(posts) {
+      const container = document.getElementById('posts-list-container');
+      container.innerHTML = posts.map(post => `
+        <div class="border border-gray-200 p-4 rounded-lg flex justify-between items-center bg-gray-50">
+          <div>
+            <h4 class="font-bold">${post.title}</h4>
+            <span class="text-xs px-2 py-1 rounded ${post.status === 'Published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">${post.status}</span>
+          </div>
+          <button onclick='editPost(${JSON.stringify(post)})' class="bg-blue-100 hover:bg-blue-200 text-blue-600 text-xs px-3 py-2 rounded font-bold">Edit</button>
+        </div>
+      `).join('');
+    }
+
+    function openPostForm() {
+      document.getElementById('post-id').value = '';
+      document.getElementById('post-title').value = '';
+      document.getElementById('post-slug').value = '';
+      document.getElementById('post-content').value = '';
+      document.getElementById('post-status').value = 'Published';
+      document.getElementById('post-modal-title').innerText = 'Tulis Artikel Baru';
+      document.getElementById('post-modal').classList.remove('hidden');
+    }
+
+    function editPost(post) {
+      document.getElementById('post-id').value = post.id;
+      document.getElementById('post-title').value = post.title;
+      document.getElementById('post-slug').value = post.slug;
+      document.getElementById('post-content').value = post.content;
+      document.getElementById('post-status').value = post.status;
+      document.getElementById('post-modal-title').innerText = 'Edit Artikel';
+      document.getElementById('post-modal').classList.remove('hidden');
+    }
+
+    function closePostModal() {
+      document.getElementById('post-modal').classList.add('hidden');
+    }
+
+    function autoGenerateSlug(title) {
+      const slug = title.toLowerCase()
+        .replace(/[^a-z0-9 -]/g, '') // hapus karakter aneh
+        .replace(/\s+/g, '-')       // ganti spasi jadi strip
+        .replace(/-+/g, '-');       // satukan strip ganda
+      document.getElementById('post-slug').value = slug;
+    }
+
+    async function savePost() {
+      const payload = {
+        id: document.getElementById('post-id').value || null,
+        title: document.getElementById('post-title').value,
+        slug: document.getElementById('post-slug').value,
+        content: document.getElementById('post-content').value,
+        status: document.getElementById('post-status').value
+      };
+
+      try {
+        const res = await fetch(`${API_URL}/posts/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-API-KEY': token },
+          body: JSON.stringify(payload)
+        }).then(r => r.json());
+
+        if (res.status === 'success') {
+          alert('Artikel berhasil disimpan!');
+          closePostModal();
+          loadAllData();
+        }
+      } catch (err) {
+        alert('Gagal menyimpan artikel.');
+      }
+    }
+
+    // --- NAVIGASI TAB BENTUK VISUAL ---
+    function switchTab(tab) {
+      const tabs = ['settings', 'rooms', 'posts'];
+      tabs.forEach(t => {
+        const element = document.getElementById(`section-${t}`);
+        const button = document.getElementById(`tab-${t}`);
+        if (t === tab) {
+          element.classList.remove('hidden');
+          button.className = "border-b-2 border-blue-600 pb-3 px-4 font-bold text-blue-600 outline-none transition";
+        } else {
+          element.classList.add('hidden');
+          button.className = "border-b-2 border-transparent pb-3 px-4 font-semibold text-gray-500 hover:text-gray-700 outline-none transition";
+        }
+      });
+    }
+  </script>
+</body>
+</html>
