@@ -3,62 +3,203 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hostel Website</title>
+  <title>Cozy Hostel - Kenyamanan Liburan Anda</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Smooth Transition untuk Slider Banner */
+    .slide { opacity: 0; transition: opacity 1s ease-in-out; }
+    .slide.active { opacity: 1; }
+    html { scroll-behavior: smooth; }
+  </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans">
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
-  <!-- HERO SECTION -->
-  <header class="bg-blue-600 text-white py-20 px-6 text-center">
-    <div class="max-w-4xl mx-auto">
-      <h1 id="hero-title" class="text-4xl md:text-6xl font-bold mb-4">Memuat...</h1>
-      <p id="hero-subtitle" class="text-lg md:text-xl text-blue-100 mb-8">Silakan tunggu sebentar...</p>
-      <a id="btn-wa" href="#" target="_blank" class="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition">
-        Hubungi Kami via WhatsApp
+  <!-- HEADER & NAVBAR -->
+  <nav class="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+      <!-- BRAND LOGO -->
+      <a href="#" id="nav-brand" class="text-2xl font-bold text-blue-600 tracking-wide">Hostel</a>
+      
+      <!-- DESKTOP MENU -->
+      <div class="hidden md:flex space-x-8 font-semibold text-gray-600">
+        <a href="#" class="hover:text-blue-600 transition">Beranda</a>
+        <a href="#rooms-section" class="hover:text-blue-600 transition">Pilihan Kamar</a>
+        <a href="#posts-section" class="hover:text-blue-600 transition">Promo</a>
+        <a href="#testimonials-section" class="hover:text-blue-600 transition">Testimoni</a>
+        <a href="#faq-section" class="hover:text-blue-600 transition">FAQ</a>
+        <a href="#maps-section" class="hover:text-blue-600 transition">Lokasi</a>
+      </div>
+
+      <!-- HAMBURGER BUTTON (MOBILE) -->
+      <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 focus:outline-none">
+        <i class="fa-solid fa-bars text-2xl" id="menu-icon"></i>
+      </button>
+    </div>
+
+    <!-- MOBILE MENU LIST -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 flex flex-col space-y-4 px-6 py-4 font-semibold shadow-inner">
+      <a href="#" onclick="toggleMobileMenu()" class="hover:text-blue-600">Beranda</a>
+      <a href="#rooms-section" onclick="toggleMobileMenu()" class="hover:text-blue-600">Pilihan Kamar</a>
+      <a href="#posts-section" onclick="toggleMobileMenu()" class="hover:text-blue-600">Promo</a>
+      <a href="#testimonials-section" onclick="toggleMobileMenu()" class="hover:text-blue-600">Testimoni</a>
+      <a href="#faq-section" onclick="toggleMobileMenu()" class="hover:text-blue-600">FAQ</a>
+      <a href="#maps-section" onclick="toggleMobileMenu()" class="hover:text-blue-600">Lokasi</a>
+    </div>
+  </nav>
+
+  <!-- HERO BANNER DENGAN AUTO SLIDER -->
+  <header class="relative bg-gray-900 text-white h-[75vh] flex items-center justify-center overflow-hidden">
+    <!-- Container Slides Gambar -->
+    <div id="slider-container" class="absolute inset-0 w-full h-full">
+      <!-- Gambar dirender secara dinamis -->
+    </div>
+    <!-- Layer Kegelapan Overlay -->
+    <div class="absolute inset-0 bg-black bg-opacity-50"></div>
+
+    <!-- Konten Teks Hero -->
+    <div class="relative z-10 text-center px-6 max-w-4xl mx-auto">
+      <h1 id="hero-title" class="text-4xl md:text-6xl font-bold mb-4 drop-shadow-md">Memuat...</h1>
+      <p id="hero-subtitle" class="text-lg md:text-xl text-gray-200 mb-8 drop-shadow-sm">Silakan tunggu sebentar...</p>
+      <a id="btn-hero-wa" href="#" target="_blank" class="bg-green-500 hover:bg-green-600 text-white font-bold px-8 py-4 rounded-full shadow-lg transition transform hover:scale-105 inline-flex items-center space-x-2">
+        <i class="fa-brands fa-whatsapp text-xl"></i>
+        <span>Pesan Kamar Sekarang</span>
       </a>
     </div>
   </header>
 
-  <!-- KATALOG KAMAR SECTION -->
-  <main class="max-w-6xl mx-auto py-12 px-6">
-    <section class="mb-16">
-      <h2 class="text-3xl font-bold text-center mb-8">Pilihan Kamar Terbaik</h2>
+  <!-- SEKSI UTAMA KONTEN -->
+  <main class="max-w-6xl mx-auto py-16 px-6 flex-grow">
+    
+    <!-- 1. PILIHAN KAMAR -->
+    <section id="rooms-section" class="scroll-mt-24 mb-24">
+      <h2 class="text-3xl font-bold text-center mb-2">Pilihan Kamar Terbaik</h2>
+      <p class="text-center text-gray-500 mb-12">Temukan kenyamanan istirahat sesuai anggaran liburan Anda</p>
       <div id="rooms-container" class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <!-- Kamar akan dirender di sini oleh Javascript -->
+        <!-- Kartu kamar dirender JS -->
       </div>
     </section>
 
-    <!-- ARTIKEL / PROMO SECTION -->
-    <section>
-      <h2 class="text-3xl font-bold text-center mb-8">Promo & Info Terbaru</h2>
+    <!-- 2. PROMO & BERITA -->
+    <section id="posts-section" class="scroll-mt-24 mb-24">
+      <h2 class="text-3xl font-bold text-center mb-2">Promo & Info Terbaru</h2>
+      <p class="text-center text-gray-500 mb-12">Dapatkan info penawaran menarik khusus dari kami</p>
       <div id="posts-container" class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <!-- Artikel akan dirender di sini oleh Javascript -->
+        <!-- Kartu artikel dirender JS -->
+      </div>
+    </section>
+
+    <!-- 3. TESTIMONI -->
+    <section id="testimonials-section" class="scroll-mt-24 mb-24">
+      <h2 class="text-3xl font-bold text-center mb-2">Ulasan Tamu Kami</h2>
+      <p class="text-center text-gray-500 mb-12">Pengalaman nyata langsung dari para penjelajah dunia</p>
+      <div id="testimonials-container" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Testimoni dirender JS -->
+      </div>
+    </section>
+
+    <!-- 4. INSTAGRAM TOGGLE FEED -->
+    <section id="instagram-section" class="mb-24 hidden">
+      <h2 class="text-3xl font-bold text-center mb-2">Ikuti Instagram Kami</h2>
+      <p class="text-center text-gray-500 mb-12">Momen seru dan keseharian aktivitas di hostel kami</p>
+      <div id="instagram-container" class="max-w-md mx-auto border border-gray-100 rounded-xl p-4 bg-white shadow-sm">
+        <!-- Widget IG dirender JS -->
+      </div>
+    </section>
+
+    <!-- 5. FAQ (ACCODRDION STYLE) -->
+    <section id="faq-section" class="scroll-mt-24 mb-24">
+      <h2 class="text-3xl font-bold text-center mb-2">Pertanyaan Umum (FAQ)</h2>
+      <p class="text-center text-gray-500 mb-12">Segala hal yang sering ditanyakan sebelum menginap</p>
+      <div class="max-w-3xl mx-auto space-y-4">
+        <div class="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
+          <button onclick="toggleFaq(1)" class="w-full text-left px-6 py-4 font-bold flex justify-between items-center hover:bg-gray-50 outline-none transition">
+            <span>Bagaimana kebijakan jam Check-In dan Check-Out?</span>
+            <i id="faq-icon-1" class="fa-solid fa-chevron-down text-gray-400 transition-transform"></i>
+          </button>
+          <div id="faq-answer-1" class="hidden px-6 pb-4 text-gray-600 text-sm leading-relaxed">
+            Check-In standar dimulai pukul 14:00 WIB, dan waktu Check-Out maksimal pukul 12:00 WIB. Layanan resepsionis kami siap melayani jika Anda melakukan konfirmasi terlebih dahulu.
+          </div>
+        </div>
+        <div class="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
+          <button onclick="toggleFaq(2)" class="w-full text-left px-6 py-4 font-bold flex justify-between items-center hover:bg-gray-50 outline-none transition">
+            <span>Apakah harga sewa sudah termasuk sarapan pagi?</span>
+            <i id="faq-icon-2" class="fa-solid fa-chevron-down text-gray-400 transition-transform"></i>
+          </button>
+          <div id="faq-answer-2" class="hidden px-6 pb-4 text-gray-600 text-sm leading-relaxed">
+            Untuk tipe kamar Dormitory, kami menyediakan teh, kopi, dan roti panggang gratis secara prasmanan di area dapur umum dari pukul 07:00 hingga 10:00 pagi.
+          </div>
+        </div>
+        <div class="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
+          <button onclick="toggleFaq(3)" class="w-full text-left px-6 py-4 font-bold flex justify-between items-center hover:bg-gray-50 outline-none transition">
+            <span>Apakah ada loker pengaman untuk tipe kamar asrama (Dorm)?</span>
+            <i id="faq-icon-3" class="fa-solid fa-chevron-down text-gray-400 transition-transform"></i>
+          </button>
+          <div id="faq-answer-3" class="hidden px-6 pb-4 text-gray-600 text-sm leading-relaxed">
+            Ya, tentu saja. Setiap bed dilengkapi dengan satu unit loker pribadi yang aman. Anda disarankan untuk membawa gembok kecil sendiri untuk keamanan maksimal.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. GOOGLE MAPS -->
+    <section id="maps-section" class="scroll-mt-24">
+      <h2 class="text-3xl font-bold text-center mb-2">Lokasi Strategis</h2>
+      <p class="text-center text-gray-500 mb-12">Sangat mudah dijangkau dari stasiun, bandara, dan ikon kota</p>
+      <div class="rounded-xl overflow-hidden shadow-md border border-gray-200 h-[400px] w-full">
+        <iframe id="maps-iframe" src="" class="w-full h-full border-0" allowfullscreen="" loading="lazy"></iframe>
       </div>
     </section>
   </main>
 
+  <!-- FLOATING WA BUTTON (BULET MELAYANG) -->
+  <a id="floating-wa" href="#" target="_blank" class="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition transform hover:scale-110 active:scale-95 z-50 group">
+    <i class="fa-brands fa-whatsapp text-3xl"></i>
+    <span class="absolute right-16 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg shadow-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition duration-300 pointer-events-none font-semibold">Tanya Admin WA</span>
+  </a>
+
   <!-- FOOTER -->
-  <footer class="bg-gray-900 text-gray-400 py-8 px-6 text-center mt-20">
+  <footer class="bg-gray-900 text-gray-400 py-12 px-6 text-center mt-auto">
     <div class="max-w-4xl mx-auto">
-      <p id="footer-address" class="mb-2">Alamat Hostel</p>
+      <p id="footer-address" class="mb-4 text-gray-300 text-sm md:text-base">Alamat Hostel</p>
       <p class="text-sm">&copy; <span id="footer-site-name">Hostel</span>. All Rights Reserved.</p>
     </div>
   </footer>
 
-  <!-- SCRIPT LOGIKA CMS & CACHING -->
+  <!-- CORE SCRIPTS LOGIKA CMS -->
   <script>
-    // Konfigurasi Endpoint API VPS Anda
-const API_URL = 'https://wa.mrdsolution.my.id/cms-api/api';
+    const API_URL = 'https://wa.mrdsolution.my.id/cms-api/api';
     const API_TOKEN = 'RAHASIA_CMS_HOSTEL_123';
+    let slideIndex = 0;
 
-    // 1. Inisialisasi Aplikasi & Render Cepat dari LocalStorage
     document.addEventListener('DOMContentLoaded', () => {
       loadCachedData();
       fetchFreshData();
     });
 
-    // 2. Fungsi Load Data dari Cache Lokal (LocalStorage) agar Loading Instan
+    // Toggle Menu Hamburger Mobile
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      const icon = document.getElementById('menu-icon');
+      menu.classList.toggle('hidden');
+      if (menu.classList.contains('hidden')) {
+        icon.className = "fa-solid fa-bars text-2xl";
+      } else {
+        icon.className = "fa-solid fa-xmark text-2xl";
+      }
+    }
+
+    // Toggle FAQ Accordion
+    function toggleFaq(id) {
+      const answer = document.getElementById(`faq-answer-${id}`);
+      const icon = document.getElementById(`faq-icon-${id}`);
+      answer.classList.toggle('hidden');
+      icon.classList.toggle('rotate-180');
+    }
+
+    // Load Local Caching
     function loadCachedData() {
       const cachedSettings = localStorage.getItem('cms_settings');
       const cachedRooms = localStorage.getItem('cms_rooms');
@@ -69,10 +210,9 @@ const API_URL = 'https://wa.mrdsolution.my.id/cms-api/api';
       if (cachedPosts) renderPosts(JSON.parse(cachedPosts));
     }
 
-    // 3. Ambil Data Segar dari API VPS di Latar Belakang
+    // Ambil Data Segar dari VPS API
     async function fetchFreshData() {
       const headers = { 'X-API-KEY': API_TOKEN };
-
       try {
         const [resSettings, resRooms, resPosts] = await Promise.all([
           fetch(`${API_URL}/settings`, { headers }).then(r => r.json()),
@@ -81,7 +221,6 @@ const API_URL = 'https://wa.mrdsolution.my.id/cms-api/api';
         ]);
 
         if (resSettings.status === 'success') {
-          // Ubah array settings menjadi object key-value
           const settingsObj = {};
           resSettings.data.forEach(item => {
             settingsObj[item.setting_key] = item.setting_value;
@@ -99,38 +238,79 @@ const API_URL = 'https://wa.mrdsolution.my.id/cms-api/api';
           localStorage.setItem('cms_posts', JSON.stringify(resPosts.data));
           renderPosts(resPosts.data);
         }
-
       } catch (error) {
-        console.error('Gagal mengambil data terbaru dari server:', error);
+        console.error('Error menyinkronkan data segar:', error);
       }
     }
 
-    // 4. Fungsi Render Data ke Tampilan Web (HTML DOM)
+    // Render Data Settings & Auto Slider
     function renderSettings(settings) {
       if (!settings) return;
+      document.getElementById('nav-brand').innerText = settings.site_name || 'Hostel';
       document.getElementById('hero-title').innerText = settings.hero_title || 'Selamat Datang';
       document.getElementById('hero-subtitle').innerText = settings.hero_subtitle || '';
       document.getElementById('footer-site-name').innerText = settings.site_name || 'Hostel';
       document.getElementById('footer-address').innerText = settings.address || '';
       
-      if (settings.whatsapp_number) {
-        document.getElementById('btn-wa').href = `https://wa.me/${settings.whatsapp_number}`;
+      const waLink = settings.whatsapp_number ? `https://wa.me/${settings.whatsapp_number}` : '#';
+      document.getElementById('btn-hero-wa').href = waLink;
+      document.getElementById('floating-wa').href = waLink;
+
+      if (settings.maps_iframe) {
+        document.getElementById('maps-iframe').src = settings.maps_iframe;
       }
+
+      if (settings.slider_images) {
+        const images = settings.slider_images.split(',');
+        const sliderContainer = document.getElementById('slider-container');
+        sliderContainer.innerHTML = images.map((img, idx) => `
+          <div class="slide absolute inset-0 w-full h-full bg-cover bg-center ${idx === 0 ? 'active' : ''}" style="background-image: url('${img.trim()}')"></div>
+        `).join('');
+        startSlider();
+      }
+
+      // Instagram Option Toggle (ON/OFF)
+      if (settings.instagram_toggle === 'ON' && settings.instagram_embed_code) {
+        document.getElementById('instagram-section').classList.remove('hidden');
+        document.getElementById('instagram-container').innerHTML = settings.instagram_embed_code;
+        if (window.instgrm) window.instgrm.Embeds.process();
+      } else {
+        document.getElementById('instagram-section').classList.add('hidden');
+      }
+
+      // Testimoni Rendering
+      if (settings.testimonials) {
+        try {
+          const testimonialsList = JSON.parse(settings.testimonials);
+          renderTestimonials(testimonialsList);
+        } catch (e) {
+          console.error("Format JSON testimoni salah.");
+        }
+      }
+    }
+
+    function startSlider() {
+      const slides = document.querySelectorAll('.slide');
+      if (slides.length <= 1) return;
+      setInterval(() => {
+        slides[slideIndex].classList.remove('active');
+        slideIndex = (slideIndex + 1) % slides.length;
+        slides[slideIndex].classList.add('active');
+      }, 5000); // Berganti gambar setiap 5 detik
     }
 
     function renderRooms(rooms) {
       const container = document.getElementById('rooms-container');
       if (!rooms || rooms.length === 0) return;
-      
       container.innerHTML = rooms.map(room => `
-        <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 transition hover:shadow-lg">
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 transition hover:shadow-md">
           <img src="${room.image_url}" alt="${room.room_type}" class="w-full h-48 object-cover">
           <div class="p-6">
-            <h3 class="text-xl font-semibold mb-2">${room.room_type}</h3>
-            <p class="text-blue-600 font-bold text-lg mb-2">Rp ${parseInt(room.price_start_from).toLocaleString('id-ID')} / malam</p>
-            <p class="text-gray-600 text-sm mb-4">${room.description}</p>
-            <div class="text-xs text-gray-500 bg-gray-50 p-2 rounded border border-gray-100">
-              <strong>Fasilitas:</strong> ${room.amenities}
+            <h3 class="text-xl font-bold mb-1">${room.room_type}</h3>
+            <p class="text-blue-600 font-extrabold text-lg mb-3">Rp ${parseInt(room.price_start_from).toLocaleString('id-ID')} <span class="text-xs text-gray-400 font-normal">/ malam</span></p>
+            <p class="text-gray-600 text-sm mb-4 leading-relaxed">${room.description}</p>
+            <div class="text-xs text-gray-500 bg-gray-50 p-2.5 rounded border border-gray-100">
+              <strong class="text-gray-700">Fasilitas:</strong> ${room.amenities}
             </div>
           </div>
         </div>
@@ -140,14 +320,28 @@ const API_URL = 'https://wa.mrdsolution.my.id/cms-api/api';
     function renderPosts(posts) {
       const container = document.getElementById('posts-container');
       if (!posts || posts.length === 0) return;
-
-      container.innerHTML = posts.map(post => `
-        <div class="bg-white rounded-lg shadow-md p-6 border border-gray-100 transition hover:shadow-lg">
-          <h3 class="text-xl font-semibold mb-2">${post.title}</h3>
-          <div class="text-gray-600 text-sm mb-4">${post.content}</div>
-          <span class="text-xs text-gray-400">
-            Dipublikasikan pada: ${new Date(post.published_at).toLocaleDateString('id-ID')}
+      const publishedPosts = posts.filter(p => p.status === 'Published');
+      container.innerHTML = publishedPosts.map(post => `
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 transition hover:shadow-md">
+          <h3 class="text-xl font-bold mb-2">${post.title}</h3>
+          <div class="text-gray-600 text-sm mb-4 leading-relaxed">${post.content}</div>
+          <span class="text-xs text-gray-400 font-medium">
+            <i class="fa-regular fa-calendar-days mr-1"></i> Dipublikasikan pada: ${new Date(post.published_at).toLocaleDateString('id-ID')}
           </span>
+        </div>
+      `).join('');
+    }
+
+    function renderTestimonials(list) {
+      const container = document.getElementById('testimonials-container');
+      if (!list || list.length === 0) return;
+      container.innerHTML = list.map(item => `
+        <div class="bg-white border border-gray-100 p-6 rounded-xl shadow-sm">
+          <div class="flex items-center space-x-1 mb-3 text-amber-400">
+            ${Array.from({ length: item.stars }, () => '<i class="fa-solid fa-star text-sm"></i>').join('')}
+          </div>
+          <p class="text-gray-600 text-sm italic mb-4 leading-relaxed">"${item.comment}"</p>
+          <div class="font-bold text-gray-800 text-sm">- ${item.name}</div>
         </div>
       `).join('');
     }
