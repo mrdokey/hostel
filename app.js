@@ -1,5 +1,5 @@
 const API_URL = 'https://wa.mrdsolution.my.id/cms-api/api';
-const API_TOKEN = 'RAHASIA_CMS_HOSTEL_123';
+const API_TOKEN = 'Sukses1234#';
 let slideIndex = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
