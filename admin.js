@@ -43,6 +43,7 @@ function initQuillEditors() {
   }
 }
 
+// LOGIN VERIFIKASI KE DATABASE SECARA DINAMIS (BEBAS HARDCODE TOKEN)
 async function attemptLogin() {
   const inputToken = document.getElementById('input-token').value;
   try {
@@ -118,19 +119,29 @@ function fillSettingsForm(data) {
     if (input) input.value = item.setting_value;
   });
   
-  // Isi input token sandi admin saat ini secara aman
   const tokenField = document.getElementById('setting-admin_token');
   if (tokenField) tokenField.value = token;
 }
 
 async function saveSettings() {
   const keys = ['site_name', 'whatsapp_number', 'hero_title', 'hero_subtitle', 'slider_images', 'address', 'maps_iframe', 'instagram_toggle', 'instagram_embed_code', 'favicon_url', 'admin_token'];
-  
   const newToken = document.getElementById('setting-admin_token').value;
-  const payload = keys.map(key => ({
-    key: key,
-    value: document.getElementById(`setting-${key}`).value
-  }));
+  
+  const payload = keys.map(key => {
+    let val = document.getElementById(`setting-${key}`).value;
+    
+    // Konversi otomatis multi-link Google Drive di baris gambar Slider
+    if (key === 'slider_images') {
+      val = val.split(',').map(url => autoConvertGoogleDriveLink(url)).join(',');
+    }
+    
+    // Konversi otomatis link Google Drive di baris Favicon
+    if (key === 'favicon_url') {
+      val = autoConvertGoogleDriveLink(val);
+    }
+    
+    return { key: key, value: val };
+  });
 
   try {
     const res = await fetch(`${API_URL}/settings/update`, {
@@ -141,7 +152,6 @@ async function saveSettings() {
 
     if (res.status === 'success') {
       alert('Pengaturan umum dan password berhasil diperbarui!');
-      // Update token lokal agar admin tidak ter-logout otomatis saat password ganti
       token = newToken;
       localStorage.setItem('cms_admin_token', token);
       loadAllData();
@@ -163,10 +173,8 @@ function renderNavigationEditor(settings) {
     menuList = [];
   }
 
-  // Merender daftar menu ke dalam baris taktis editor
   container.innerHTML = menuList.map((item, idx) => {
     if (item.children && item.children.length > 0) {
-      // Baris jika menu ini adalah Dropdown Group
       return `
         <div class="border-2 border-dashed border-blue-200 p-4 rounded-xl bg-blue-50/30 nav-row" data-type="parent">
           <div class="flex space-x-4 items-center mb-3">
@@ -188,7 +196,6 @@ function renderNavigationEditor(settings) {
       `;
     }
     
-    // Baris jika menu mandiri standar
     return `
       <div class="flex space-x-4 items-center bg-gray-50 p-3 rounded-lg border border-gray-100 nav-row" data-type="single">
         <input type="text" placeholder="Nama Menu (Label)" value="${item.label}" class="px-3 py-1.5 border rounded flex-1 text-sm nav-label outline-none">
@@ -199,14 +206,11 @@ function renderNavigationEditor(settings) {
   }).join('');
 }
 
-function addNavigationRow() {
+function addNavigationRow(type) {
   const container = document.getElementById('nav-editor-container');
   const div = document.createElement('div');
   
-  // Konfirmasi tipe menu
-  const isDropdown = confirm("Apakah Anda ingin membuat Dropdown Group (Menu bertingkat)?\n\nKlik OK untuk membuat Dropdown,\nKlik CANCEL untuk membuat Menu Mandiri biasa.");
-  
-  if (isDropdown) {
+  if (type === 'parent') {
     div.className = "border-2 border-dashed border-blue-200 p-4 rounded-xl bg-blue-50/30 nav-row";
     div.setAttribute('data-type', 'parent');
     div.innerHTML = `
@@ -330,11 +334,12 @@ function editRoom(room) {
 function closeRoomModal() { document.getElementById('room-modal').classList.add('hidden'); }
 
 async function saveRoom() {
+  const rawImageUrl = document.getElementById('room-image').value;
   const payload = {
     id: document.getElementById('room-id').value,
     room_type: document.getElementById('room-type').value,
     price_start_from: document.getElementById('room-price').value,
-    image_url: document.getElementById('room-image').value,
+    image_url: autoConvertGoogleDriveLink(rawImageUrl), // Konversi pintar file Google Drive
     amenities: document.getElementById('room-amenities').value,
     description: document.getElementById('room-desc').value
   };
@@ -374,7 +379,7 @@ function openPostForm() {
   document.getElementById('post-id').value = '';
   document.getElementById('post-title').value = '';
   document.getElementById('post-slug').value = '';
-  quillPostEditor.root.innerHTML = ''; // Reset WYSIWYG
+  quillPostEditor.root.innerHTML = ''; 
   document.getElementById('post-status').value = 'Published';
   document.getElementById('post-modal-title').innerText = 'Tulis Artikel Baru';
   document.getElementById('post-modal').classList.remove('hidden');
@@ -384,7 +389,7 @@ function editPost(post) {
   document.getElementById('post-id').value = post.id;
   document.getElementById('post-title').value = post.title;
   document.getElementById('post-slug').value = post.slug;
-  quillPostEditor.root.innerHTML = post.content || ''; // Masukkan data ke WYSIWYG
+  quillPostEditor.root.innerHTML = post.content || ''; 
   document.getElementById('post-status').value = post.status;
   document.getElementById('post-modal-title').innerText = 'Edit Artikel';
   document.getElementById('post-modal').classList.remove('hidden');
@@ -397,7 +402,7 @@ async function savePost() {
     id: document.getElementById('post-id').value || null,
     title: document.getElementById('post-title').value,
     slug: document.getElementById('post-slug').value,
-    content: quillPostEditor.root.innerHTML, // Ambil HTML dari WYSIWYG
+    content: quillPostEditor.root.innerHTML, 
     status: document.getElementById('post-status').value
   };
 
@@ -436,7 +441,7 @@ function openPageForm() {
   document.getElementById('page-id').value = '';
   document.getElementById('page-title-input').value = '';
   document.getElementById('page-slug').value = '';
-  quillPageEditor.root.innerHTML = ''; // Reset WYSIWYG
+  quillPageEditor.root.innerHTML = ''; 
   document.getElementById('page-modal-title').innerText = 'Buat Halaman Kustom Baru';
   document.getElementById('page-modal').classList.remove('hidden');
 }
@@ -445,7 +450,7 @@ function editPage(page) {
   document.getElementById('page-id').value = page.id;
   document.getElementById('page-title-input').value = page.title;
   document.getElementById('page-slug').value = page.slug;
-  quillPageEditor.root.innerHTML = page.content || ''; // Masukkan ke WYSIWYG
+  quillPageEditor.root.innerHTML = page.content || ''; 
   document.getElementById('page-modal-title').innerText = 'Edit Halaman Kustom';
   document.getElementById('page-modal').classList.remove('hidden');
 }
@@ -457,7 +462,7 @@ async function savePage() {
     id: document.getElementById('page-id').value || null,
     title: document.getElementById('page-title-input').value,
     slug: document.getElementById('page-slug').value,
-    content: quillPageEditor.root.innerHTML // Ambil HTML dari WYSIWYG
+    content: quillPageEditor.root.innerHTML 
   };
 
   try {
@@ -577,12 +582,12 @@ function autoGenerateSlug(title, targetId) {
   document.getElementById(targetId).value = slug;
 }
 
-// --- CLOUDINARY UPLOAD ---
-async function uploadToCloudinary(input, targetInputId) {
+// --- LOGIKA CLOUDINARY UPLOAD UMUM (DENGAN BEBAN STATUS YANG AMAN) ---
+async function uploadToCloudinary(input, targetInputId, statusSpanId = 'upload-status-room') {
   const file = input.files[0];
   if (!file) return;
 
-  const statusSpan = document.getElementById('upload-status-room');
+  const statusSpan = document.getElementById(statusSpanId);
   if (statusSpan) statusSpan.innerText = 'Mengunggah ke Cloudinary...';
 
   const formData = new FormData();
@@ -599,11 +604,64 @@ async function uploadToCloudinary(input, targetInputId) {
       document.getElementById(targetInputId).value = res.secure_url;
       if (statusSpan) statusSpan.innerText = 'Unggah Berhasil!';
     } else {
-      if (statusSpan) statusSpan.innerText = 'Gagal upload.';
+      if (statusSpan) statusSpan.innerText = 'Gagal upload, periksa preset Anda.';
     }
   } catch (err) {
-    if (statusSpan) statusSpan.innerText = 'Error jaringan.';
+    if (statusSpan) statusSpan.innerText = 'Error jaringan Cloudinary.';
   }
+}
+
+// --- LOGIKA UPLOAD LANGSUNG KE DALAM KOLOM SLIDER GAMBAR ---
+async function uploadToSlider(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const statusSpan = document.getElementById('upload-status-slider');
+  if (statusSpan) statusSpan.innerText = 'Mengunggah ke Cloudinary...';
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_PRESET);
+
+  try {
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+      method: 'POST',
+      body: formData
+    }).then(r => r.json());
+
+    if (res.secure_url) {
+      const txtArea = document.getElementById('setting-slider_images');
+      const currentVal = txtArea.value.trim();
+      // Menggabungkan link baru otomatis dipisahkan tanda koma
+      txtArea.value = currentVal ? currentVal + ',' + res.secure_url : res.secure_url;
+      if (statusSpan) statusSpan.innerText = 'Tautan Berhasil Ditambahkan ke Slider!';
+    } else {
+      if (statusSpan) statusSpan.innerText = 'Gagal unggah gambar.';
+    }
+  } catch (err) {
+    if (statusSpan) statusSpan.innerText = 'Error jaringan Cloudinary.';
+  }
+}
+
+// ========================================================
+// FUNGSI PINTAR: OTOMATIS KONVERSI LINK GOOGLE DRIVE KE CDN
+// ========================================================
+function autoConvertGoogleDriveLink(url) {
+  if (!url) return '';
+  
+  const fileIdRegex = /\/file\/d\/([a-zA-Z0-9_-]+)/;
+  const queryIdRegex = /[?&]id=([a-zA-Z0-9_-]+)/;
+  
+  let match = url.match(fileIdRegex);
+  if (!match) {
+    match = url.match(queryIdRegex);
+  }
+  
+  if (match && match[1]) {
+    return `https://lh3.googleusercontent.com/u/0/d/${match[1]}`;
+  }
+  
+  return url.trim();
 }
 
 function switchTab(tab) {
