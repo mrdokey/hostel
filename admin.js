@@ -7,7 +7,6 @@ let CLOUDINARY_PRESET = 'Hostel_Jacky';
 let globalSettings = [];
 let globalTestimonials = [];
 
-// Instance Quill Editor
 let quillPostEditor = null;
 let quillPageEditor = null;
 
@@ -19,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Inisialisasi Quill Editor Sekali Saja
 function initQuillEditors() {
   const toolbarOptions = [
     [{ 'header': [1, 2, 3, false] }],
@@ -43,7 +41,6 @@ function initQuillEditors() {
   }
 }
 
-// LOGIN VERIFIKASI KE DATABASE SECARA DINAMIS (BEBAS HARDCODE TOKEN)
 async function attemptLogin() {
   const inputToken = document.getElementById('input-token').value;
   try {
@@ -118,7 +115,6 @@ function fillSettingsForm(data) {
     const input = document.getElementById(`setting-${item.setting_key}`);
     if (input) input.value = item.setting_value;
   });
-  
   const tokenField = document.getElementById('setting-admin_token');
   if (tokenField) tokenField.value = token;
 }
@@ -126,20 +122,14 @@ function fillSettingsForm(data) {
 async function saveSettings() {
   const keys = ['site_name', 'whatsapp_number', 'hero_title', 'hero_subtitle', 'slider_images', 'address', 'maps_iframe', 'instagram_toggle', 'instagram_embed_code', 'favicon_url', 'admin_token'];
   const newToken = document.getElementById('setting-admin_token').value;
-  
   const payload = keys.map(key => {
     let val = document.getElementById(`setting-${key}`).value;
-    
-    // Konversi otomatis multi-link Google Drive di baris gambar Slider
     if (key === 'slider_images') {
       val = val.split(',').map(url => autoConvertGoogleDriveLink(url)).join(',');
     }
-    
-    // Konversi otomatis link Google Drive di baris Favicon
     if (key === 'favicon_url') {
       val = autoConvertGoogleDriveLink(val);
     }
-    
     return { key: key, value: val };
   });
 
@@ -161,7 +151,7 @@ async function saveSettings() {
   }
 }
 
-// --- TAB 2: MENU NAVIGASI DENGAN SUPORT SUB-MENU ---
+// --- TAB 2: MENU NAVIGASI ---
 function renderNavigationEditor(settings) {
   const container = document.getElementById('nav-editor-container');
   const menuSetting = settings.find(s => s.setting_key === 'navigation_menu');
@@ -292,12 +282,13 @@ async function saveNavigationMenu() {
   }
 }
 
-// --- TAB 3: KATALOG KAMAR ---
+// --- TAB 3: KATALOG KAMAR (DENGAN SERIALISASI META-DATA SMART) ---
 function renderRoomsList(rooms) {
   const container = document.getElementById('rooms-list-container');
   container.innerHTML = rooms.map(room => `
     <div class="border border-gray-200 p-4 rounded-lg flex space-x-4 items-center bg-gray-50 shadow-sm">
-      <img src="${room.image_url}" class="w-16 h-16 object-cover rounded border">
+      <!-- Mengambil index gambar pertama sebagai thumbnail -->
+      <img src="${room.image_url.split(',')[0]}" class="w-16 h-16 object-cover rounded border">
       <div class="flex-grow">
         <h4 class="font-bold text-sm text-gray-800">${room.room_type}</h4>
         <p class="text-xs text-blue-600 font-bold">Rp ${parseInt(room.price_start_from).toLocaleString('id-ID')}</p>
@@ -315,6 +306,13 @@ function openRoomForm() {
   document.getElementById('room-image').value = '';
   document.getElementById('room-amenities').value = '';
   document.getElementById('room-desc').value = '';
+  
+  // Reset Meta Data
+  document.getElementById('room-meta-capacity').value = '4';
+  document.getElementById('room-meta-beds').value = '2 Queen bed';
+  document.getElementById('room-meta-bathrooms').value = '2';
+  document.getElementById('room-meta-size').value = '150';
+
   document.getElementById('room-modal-title').innerText = 'Tambah Kamar Baru';
   document.getElementById('room-modal').classList.remove('hidden');
 }
@@ -325,8 +323,30 @@ function editRoom(room) {
   document.getElementById('room-type').value = room.room_type;
   document.getElementById('room-price').value = room.price_start_from;
   document.getElementById('room-image').value = room.image_url;
-  document.getElementById('room-amenities').value = room.amenities;
   document.getElementById('room-desc').value = room.description;
+
+  // Dekompresi data Amenities JSON atau Teks Biasa (Backward Compatible)
+  if (room.amenities.trim().startsWith('{')) {
+    try {
+      const meta = JSON.parse(room.amenities);
+      document.getElementById('room-meta-capacity').value = meta.capacity || '4';
+      document.getElementById('room-meta-beds').value = meta.beds || '2 Queen bed';
+      document.getElementById('room-meta-bathrooms').value = meta.bathrooms || '2';
+      document.getElementById('room-meta-size').value = meta.size || '150';
+      document.getElementById('room-amenities').value = meta.list || '';
+    } catch (e) {
+      // Jika corrupt, set default
+      document.getElementById('room-amenities').value = room.amenities;
+    }
+  } else {
+    // Jika data lama berformat teks biasa
+    document.getElementById('room-meta-capacity').value = '4';
+    document.getElementById('room-meta-beds').value = '2 Queen bed';
+    document.getElementById('room-meta-bathrooms').value = '2';
+    document.getElementById('room-meta-size').value = '150';
+    document.getElementById('room-amenities').value = room.amenities;
+  }
+
   document.getElementById('room-modal-title').innerText = 'Edit Kamar';
   document.getElementById('room-modal').classList.remove('hidden');
 }
@@ -335,12 +355,22 @@ function closeRoomModal() { document.getElementById('room-modal').classList.add(
 
 async function saveRoom() {
   const rawImageUrl = document.getElementById('room-image').value;
+  
+  // Gabungkan field meta-data menjadi satu string JSON rapi di kolom amenities
+  const metaObj = {
+    capacity: document.getElementById('room-meta-capacity').value || "4",
+    beds: document.getElementById('room-meta-beds').value || "2 Queen bed",
+    bathrooms: document.getElementById('room-meta-bathrooms').value || "2",
+    size: document.getElementById('room-meta-size').value || "150",
+    list: document.getElementById('room-amenities').value
+  };
+
   const payload = {
     id: document.getElementById('room-id').value,
     room_type: document.getElementById('room-type').value,
     price_start_from: document.getElementById('room-price').value,
-    image_url: autoConvertGoogleDriveLink(rawImageUrl), // Konversi pintar file Google Drive
-    amenities: document.getElementById('room-amenities').value,
+    image_url: rawImageUrl.split(',').map(url => autoConvertGoogleDriveLink(url)).join(','), // Konversi otomatis GDrive untuk banyak gambar
+    amenities: JSON.stringify(metaObj), // Simpan format JSON kustom ke database
     description: document.getElementById('room-desc').value
   };
 
@@ -361,7 +391,7 @@ async function saveRoom() {
   }
 }
 
-// --- TAB 4: ARTIKEL & PROMO (DENGAN WYSIWYG) ---
+// --- TAB 4: ARTIKEL & PROMO ---
 function renderPostsList(posts) {
   const container = document.getElementById('posts-list-container');
   container.innerHTML = posts.map(post => `
@@ -423,7 +453,7 @@ async function savePost() {
   }
 }
 
-// --- TAB 5: HALAMAN KUSTOM (DENGAN WYSIWYG) ---
+// --- TAB 5: HALAMAN KUSTOM ---
 function renderPagesList(pages) {
   const container = document.getElementById('pages-list-container');
   container.innerHTML = pages.map(page => `
@@ -582,7 +612,7 @@ function autoGenerateSlug(title, targetId) {
   document.getElementById(targetId).value = slug;
 }
 
-// --- LOGIKA CLOUDINARY UPLOAD UMUM (DENGAN BEBAN STATUS YANG AMAN) ---
+// --- LOGIKA CLOUDINARY UPLOAD UMUM ---
 async function uploadToCloudinary(input, targetInputId, statusSpanId = 'upload-status-room') {
   const file = input.files[0];
   if (!file) return;
@@ -611,7 +641,39 @@ async function uploadToCloudinary(input, targetInputId, statusSpanId = 'upload-s
   }
 }
 
-// --- LOGIKA UPLOAD LANGSUNG KE DALAM KOLOM SLIDER GAMBAR ---
+// --- LOGIKA UPLOAD BANYAK GAMBAR UNTUK SLIDER DETAIL KAMAR ---
+async function uploadToRoomImages(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const statusSpan = document.getElementById('upload-status-room');
+  if (statusSpan) statusSpan.innerText = 'Mengunggah ke Cloudinary...';
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_PRESET);
+
+  try {
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+      method: 'POST',
+      body: formData
+    }).then(r => r.json());
+
+    if (res.secure_url) {
+      const txtArea = document.getElementById('room-image');
+      const currentVal = txtArea.value.trim();
+      // Menggabungkan banyak gambar dipisahkan tanda koma
+      txtArea.value = currentVal ? currentVal + ',' + res.secure_url : res.secure_url;
+      if (statusSpan) statusSpan.innerText = 'Gambar Kamar Berhasil Ditambahkan ke Galeri!';
+    } else {
+      if (statusSpan) statusSpan.innerText = 'Gagal mengunggah gambar.';
+    }
+  } catch (err) {
+    if (statusSpan) statusSpan.innerText = 'Error jaringan Cloudinary.';
+  }
+}
+
+// --- LOGIKA UPLOAD LANGSUNG KE DALAM KOLOM SLIDER GAMBAR BANNER DEPAN ---
 async function uploadToSlider(input) {
   const file = input.files[0];
   if (!file) return;
@@ -632,7 +694,6 @@ async function uploadToSlider(input) {
     if (res.secure_url) {
       const txtArea = document.getElementById('setting-slider_images');
       const currentVal = txtArea.value.trim();
-      // Menggabungkan link baru otomatis dipisahkan tanda koma
       txtArea.value = currentVal ? currentVal + ',' + res.secure_url : res.secure_url;
       if (statusSpan) statusSpan.innerText = 'Tautan Berhasil Ditambahkan ke Slider!';
     } else {
@@ -643,9 +704,7 @@ async function uploadToSlider(input) {
   }
 }
 
-// ========================================================
-// FUNGSI PINTAR: OTOMATIS KONVERSI LINK GOOGLE DRIVE KE CDN
-// ========================================================
+// --- SISTEM PINTAR DETEKSI GOOGLE DRIVE LINK ---
 function autoConvertGoogleDriveLink(url) {
   if (!url) return '';
   

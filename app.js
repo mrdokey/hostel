@@ -1,10 +1,12 @@
 const API_URL = 'https://wa.mrdsolution.my.id/cms-api/api';
-const API_TOKEN = 'Sukses1234#';
+const API_TOKEN = 'RAHASIA_CMS_HOSTEL_123';
 let slideIndex = 0;
+
+// State penyimpan index slider gambar kamar saat ini
+const roomSlideIndexes = {};
 
 document.addEventListener('DOMContentLoaded', () => {
   handleRouting();
-  // Menutup semua dropdown jika klik di luar area navigasi
   window.addEventListener('click', (e) => {
     if (!e.target.closest('.dropdown-trigger') && !e.target.closest('.dropdown-menu')) {
       document.querySelectorAll('.dropdown-menu').forEach(el => el.classList.add('hidden'));
@@ -74,7 +76,7 @@ async function fetchFreshData() {
       renderPosts(resPosts.data);
     }
   } catch (err) {
-    console.error('Gagal sinkronisasi:', err);
+    console.error('Error sync fresh data:', err);
   }
 }
 
@@ -110,9 +112,8 @@ function renderSettings(settings) {
   document.getElementById('footer-site-name').innerText = settings.site_name || 'Hostel';
   document.getElementById('footer-address').innerText = settings.address || '';
   
-  // Favicon Dinamis
   if (settings.favicon_url) {
-    document.getElementById('favicon-link').href = settings.favicon_url;
+    document.getElementById('favicon-link').href = settings.favicon_url + "?v=" + new Date().getTime();
   }
 
   const waLink = settings.whatsapp_number ? `https://wa.me/${settings.whatsapp_number}` : '#';
@@ -121,7 +122,6 @@ function renderSettings(settings) {
 
   if (document.getElementById('maps-iframe')) document.getElementById('maps-iframe').src = settings.maps_iframe || '';
 
-  // Render Menu dengan Dropdown
   if (settings.navigation_menu) {
     try { renderNavigation(JSON.parse(settings.navigation_menu)); } catch (e) {}
   }
@@ -148,38 +148,33 @@ function renderSettings(settings) {
   }
 }
 
-// LOGIKA RENDER DROPDOWN NAVIGASI
 function renderNavigation(menuList) {
   const desktop = document.getElementById('desktop-menu');
   const mobile = document.getElementById('mobile-menu');
 
-  // Desktop Render
   desktop.innerHTML = menuList.map((item, idx) => {
     if (item.children && item.children.length > 0) {
-      // Jika memiliki sub-menu (Dropdown)
       return `
         <div class="relative dropdown-container">
           <button onclick="toggleDropdown(${idx})" class="dropdown-trigger hover:text-blue-600 transition flex items-center space-x-1 outline-none">
             <span>${item.label}</span> <i class="fa-solid fa-chevron-down text-xs"></i>
           </button>
-          <div id="dropdown-${idx}" class="dropdown-menu hidden absolute left-0 mt-2 w-48 bg-white border border-gray-100 rounded-lg shadow-md py-2 text-sm z-50">
+          <div id="dropdown-${idx}" class="dropdown-menu hidden absolute left-0 mt-2 w-48 bg-white border border-slate-100 rounded-xl shadow-md py-2 text-sm z-50">
             ${item.children.map(sub => `
-              <a href="${sub.url}" class="block px-4 py-2 hover:bg-gray-50 hover:text-blue-600 transition" ${sub.url.startsWith('?page=') ? 'onclick="setTimeout(handleRouting, 50)"' : ''}>${sub.label}</a>
+              <a href="${sub.url}" class="block px-4 py-2 hover:bg-slate-50 hover:text-blue-600 transition" ${sub.url.startsWith('?page=') ? 'onclick="setTimeout(handleRouting, 50)"' : ''}>${sub.label}</a>
             `).join('')}
           </div>
         </div>
       `;
     }
-    // Menu Standar
     return `<a href="${item.url}" class="hover:text-blue-600 transition" ${item.url.startsWith('?page=') ? 'onclick="setTimeout(handleRouting, 50)"' : ''}>${item.label}</a>`;
   }).join('');
 
-  // Mobile Render (Accordion Style)
   mobile.innerHTML = menuList.map((item, idx) => {
     if (item.children && item.children.length > 0) {
       return `
         <div class="flex flex-col space-y-2">
-          <span class="text-gray-400 font-bold text-xs uppercase px-2">${item.label}</span>
+          <span class="text-slate-400 font-bold text-xs uppercase px-2">${item.label}</span>
           <div class="flex flex-col space-y-2 pl-4">
             ${item.children.map(sub => `
               <a href="${sub.url}" onclick="toggleMobileMenu(); ${sub.url.startsWith('?page=') ? 'setTimeout(handleRouting, 50)' : ''}" class="hover:text-blue-600 text-sm">${sub.label}</a>
@@ -209,22 +204,109 @@ function startSlider() {
   }, 5000);
 }
 
+// LOGIKA RENDER KATALOG KAMAR (SLIDER INTERNAL & DESAIN OTA PREMIUM)
 function renderRooms(rooms) {
   const container = document.getElementById('rooms-container');
   if (!container || !rooms || rooms.length === 0) return;
-  container.innerHTML = rooms.map(room => `
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 transition hover:shadow-md">
-      <img src="${room.image_url}" alt="${room.room_type}" class="w-full h-48 object-cover">
-      <div class="p-6">
-        <h3 class="text-xl font-bold mb-1">${room.room_type}</h3>
-        <p class="text-blue-600 font-extrabold text-lg mb-3">Rp ${parseInt(room.price_start_from).toLocaleString('id-ID')} <span class="text-xs text-gray-400 font-normal">/ malam</span></p>
-        <p class="text-gray-600 text-sm mb-4 leading-relaxed">${room.description}</p>
-        <div class="text-xs text-gray-500 bg-gray-50 p-2.5 rounded border border-gray-100">
-          <strong class="text-gray-700">Fasilitas:</strong> ${room.amenities}
+  
+  container.innerHTML = rooms.map(room => {
+    // Memproses multi-image (pisahkan dengan koma)
+    const images = room.image_url.split(',').map(img => img.trim());
+    const roomIdSafe = room.id.replace(/[^a-zA-Z0-9]/g, ''); // bersihkan ID untuk selector
+    roomSlideIndexes[roomIdSafe] = 0; // Set index awal slider kamar
+
+    // Dekode Amenities (Cek apakah berformat JSON atau teks biasa)
+    let capacity = "4", beds = "2 Queen bed", bathrooms = "2", size = "150m²", list = room.amenities;
+    
+    if (room.amenities.trim().startsWith('{')) {
+      try {
+        const meta = JSON.parse(room.amenities);
+        capacity = meta.capacity || capacity;
+        beds = meta.beds || beds;
+        bathrooms = meta.bathrooms || bathrooms;
+        size = meta.size || size;
+        list = meta.list || list;
+      } catch (e) {
+        console.error("Gagal membaca meta-data kamar", e);
+      }
+    }
+
+    return `
+      <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100/80 transition hover:shadow-md duration-300 flex flex-col h-full">
+        
+        <!-- CAROUSEL/SLIDER GAMBAR KAMAR -->
+        <div class="relative h-56 bg-slate-900 group overflow-hidden">
+          <div id="room-slider-${roomIdSafe}" class="absolute inset-0 w-full h-full flex transition-transform duration-500 ease-out">
+            ${images.map(img => `
+              <img src="${img}" class="w-full h-full object-cover shrink-0 select-none" alt="${room.room_type}">
+            `).join('')}
+          </div>
+
+          <!-- Tombol Navigasi Slider Kamar (Hanya tampil jika gambar > 1) -->
+          ${images.length > 1 ? `
+            <button onclick="slideRoomImg('${roomIdSafe}', -1, ${images.length})" class="absolute left-3 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center transition opacity-0 group-hover:opacity-100 z-10">
+              <i class="fa-solid fa-chevron-left text-xs"></i>
+            </button>
+            <button onclick="slideRoomImg('${roomIdSafe}', 1, ${images.length})" class="absolute right-3 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center transition opacity-0 group-hover:opacity-100 z-10">
+              <i class="fa-solid fa-chevron-right text-xs"></i>
+            </button>
+          ` : ''}
+        </div>
+
+        <div class="p-6 flex flex-col flex-grow">
+          <h3 class="text-xl font-bold mb-1 text-slate-800 leading-tight">${room.room_type}</h3>
+          
+          <!-- SEKSI HARGA OTA PREMIUM -->
+          <p class="text-blue-600 font-extrabold text-xl mb-4">
+            Rp ${parseInt(room.price_start_from).toLocaleString('id-ID')} 
+            <span class="text-xs text-slate-400 font-normal">/ malam</span>
+          </p>
+
+          <!-- SEKSI ICON INDIKATOR PROFESIONAL (Wordpress/OTA style) -->
+          <div class="grid grid-cols-2 gap-3 mb-5 py-3 border-y border-slate-100 text-xs font-semibold text-slate-500">
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-user-group text-slate-400 text-sm"></i>
+              <span>${capacity} Tamu</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-bed text-slate-400 text-sm"></i>
+              <span>${beds}</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-shower text-slate-400 text-sm"></i>
+              <span>${bathrooms} Kamar Mandi</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-maximize text-slate-400 text-sm"></i>
+              <span>${size} m²</span>
+            </div>
+          </div>
+
+          <!-- DESKRIPSI KAMAR -->
+          <p class="text-slate-600 text-sm mb-6 leading-relaxed flex-grow">${room.description}</p>
+          
+          <!-- FASILITAS SELEKTIF -->
+          <div class="text-[11px] font-medium text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100">
+            <strong class="text-slate-700 block mb-1">Fasilitas Tambahan:</strong> 
+            ${list}
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
+}
+
+// Handler Pergerakan Slider Kamar
+function slideRoomImg(roomIdSafe, direction, totalImgs) {
+  const slider = document.getElementById(`room-slider-${roomIdSafe}`);
+  let curIndex = roomSlideIndexes[roomIdSafe];
+
+  curIndex += direction;
+  if (curIndex < 0) curIndex = totalImgs - 1;
+  if (curIndex >= totalImgs) curIndex = 0;
+
+  roomSlideIndexes[roomIdSafe] = curIndex;
+  slider.style.transform = `translateX(-${curIndex * 100}%)`;
 }
 
 function renderPosts(posts) {
@@ -232,10 +314,10 @@ function renderPosts(posts) {
   if (!container || !posts || posts.length === 0) return;
   const publishedPosts = posts.filter(p => p.status === 'Published');
   container.innerHTML = publishedPosts.map(post => `
-    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 transition hover:shadow-md">
-      <h3 class="text-xl font-bold mb-2">${post.title}</h3>
-      <div class="text-gray-600 text-sm mb-4 leading-relaxed">${post.content}</div>
-      <span class="text-xs text-gray-400 font-medium">
+    <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100/80 transition hover:shadow-md duration-300">
+      <h3 class="text-xl font-bold mb-2 text-slate-800 leading-tight">${post.title}</h3>
+      <div class="text-slate-600 text-sm mb-4 leading-relaxed">${post.content}</div>
+      <span class="text-xs text-slate-400 font-semibold">
         <i class="fa-regular fa-calendar-days mr-1"></i> Dipublikasikan pada: ${new Date(post.published_at).toLocaleDateString('id-ID')}
       </span>
     </div>
@@ -246,12 +328,12 @@ function renderTestimonials(list) {
   const container = document.getElementById('testimonials-container');
   if (!container || !list || list.length === 0) return;
   container.innerHTML = list.map(item => `
-    <div class="bg-white border border-gray-100 p-6 rounded-xl shadow-sm">
+    <div class="bg-white border border-slate-100/80 p-6 rounded-2xl shadow-sm">
       <div class="flex items-center space-x-1 mb-3 text-amber-400">
         ${Array.from({ length: item.stars }, () => '<i class="fa-solid fa-star text-sm"></i>').join('')}
       </div>
-      <p class="text-gray-600 text-sm italic mb-4 leading-relaxed">"${item.comment}"</p>
-      <div class="font-bold text-gray-800 text-sm">- ${item.name}</div>
+      <p class="text-slate-600 text-sm italic mb-4 leading-relaxed">"${item.comment}"</p>
+      <div class="font-bold text-slate-800 text-xs">- ${item.name}</div>
     </div>
   `).join('');
 }

@@ -9,7 +9,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans min-h-screen">
+<body class="bg-gray-100 text-gray-800 font-sans min-h-screen flex flex-col">
 
   <!-- LOGIN SCREEN -->
   <div id="login-screen" class="flex items-center justify-center min-h-screen bg-gray-950 px-4">
@@ -17,7 +17,7 @@
       <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Admin Login Portal</h2>
       <div class="mb-4">
         <label class="block text-sm font-semibold mb-2">Token Akses Admin</label>
-        <input type="password" id="input-token" placeholder="Masukkan token..." class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+        <input type="password" id="input-token" placeholder="Masukkan token keamanan..." class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
       </div>
       <button onclick="attemptLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition shadow-md">
         Masuk Ke Panel
@@ -27,16 +27,16 @@
   </div>
 
   <!-- DASHBOARD MAIN CONTAINER -->
-  <div id="dashboard-screen" class="hidden">
+  <div id="dashboard-screen" class="hidden flex-grow flex flex-col">
     <!-- NAVBAR -->
     <nav class="bg-white border-b border-gray-200 py-4 px-6 flex justify-between items-center shadow-sm">
-      <span class="text-xl font-extrabold text-blue-600 tracking-wide"><i class="fa-solid fa-hotel mr-2"></i>Hostel Admin CMS</span>
+      <span class="text-xl font-extrabold text-blue-600 tracking-wide"><i class="fa-solid fa-hotel mr-2"></i>CMS Admin Portal</span>
       <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition shadow-sm">
         <i class="fa-solid fa-right-from-bracket mr-1"></i> Keluar
       </button>
     </nav>
 
-    <div class="max-w-6xl mx-auto py-10 px-6">
+    <div class="max-w-6xl mx-auto py-10 px-6 flex-grow w-full">
       <!-- NAVIGATION TABS -->
       <div class="flex space-x-2 border-b border-gray-200 mb-8 pb-px overflow-x-auto whitespace-nowrap">
         <button onclick="switchTab('settings')" id="tab-settings" class="border-b-2 border-blue-600 pb-3 px-4 font-bold text-blue-600 outline-none transition">Pengaturan Umum</button>
@@ -53,7 +53,7 @@
           <h2 class="text-xl font-bold mb-6 text-gray-800 border-b pb-2"><i class="fa-solid fa-gear mr-2 text-blue-600"></i>Ubah Informasi Website</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label class="block text-sm font-semibold mb-2">Nama Website / Hostel</label>
+              <label class="block text-sm font-semibold mb-2">Nama Website / Perusahaan</label>
               <input type="text" id="setting-site_name" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
             <div>
@@ -68,24 +68,25 @@
               <label class="block text-sm font-semibold mb-2">Sub-judul Halaman Depan (Hero Subtitle)</label>
               <textarea id="setting-hero_subtitle" rows="2" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
             </div>
-            <!-- FITUR GANTI PASWORD/TOKEN -->
             <div class="md:col-span-2 border-t pt-4">
               <label class="block text-sm font-semibold mb-1 text-red-600">Ganti Token / Password Akses Admin</label>
-              <p class="text-xs text-gray-500 mb-2">Awas! Setelah disimpan, Anda harus login ulang menggunakan password baru ini.</p>
+              <p class="text-xs text-gray-500 mb-2">Setelah disimpan, Anda otomatis menggunakan password baru ini untuk login berikutnya.</p>
               <input type="text" id="setting-admin_token" class="w-full px-4 py-2 border border-red-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500">
             </div>
-            <!-- FITUR EDIT FAVICON -->
             <div class="md:col-span-2 border-t pt-4">
               <label class="block text-sm font-semibold mb-1">Favicon Website (Ikon Tab Browser)</label>
               <input type="text" id="setting-favicon_url" class="w-full px-4 py-2 border rounded-lg outline-none text-xs font-mono">
-              <input type="file" onchange="uploadToCloudinary(this, 'setting-favicon_url')" class="mt-2 text-xs">
+              <input type="file" onchange="uploadToCloudinary(this, 'setting-favicon_url', 'upload-status-favicon')" class="mt-2 text-xs">
+              <span id="upload-status-favicon" class="text-xs text-blue-500 ml-2"></span>
             </div>
             <div class="md:col-span-2 border-t pt-4">
-              <label class="block text-sm font-semibold mb-2">Gambar Slider Depan (Pisahkan tautan link dengan tanda koma)</label>
+              <label class="block text-sm font-semibold mb-1">Gambar Slider Depan (Pisahkan tautan link dengan tanda koma)</label>
               <textarea id="setting-slider_images" rows="3" placeholder="https://link-gambar1.com, https://link-gambar2.com" class="w-full px-4 py-2 border rounded-lg text-xs font-mono outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+              <input type="file" onchange="uploadToSlider(this)" class="mt-2 text-xs">
+              <span id="upload-status-slider" class="text-xs text-blue-500 ml-2"></span>
             </div>
             <div class="md:col-span-2">
-              <label class="block text-sm font-semibold mb-2">Alamat Hostel</label>
+              <label class="block text-sm font-semibold mb-2">Alamat Fisik</label>
               <input type="text" id="setting-address" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
             <div class="md:col-span-2">
@@ -113,20 +114,25 @@
       <!-- ==================== TAB 2: MENU NAVIGATION ==================== -->
       <section id="section-menu" class="hidden bg-white p-8 rounded-xl shadow-sm border border-gray-200">
         <h2 class="text-xl font-bold mb-2 text-gray-800"><i class="fa-solid fa-compass mr-2 text-blue-600"></i>Menu Navigasi Header</h2>
-        <p class="text-sm text-gray-500 mb-6">Sesuaikan tautan di bar menu atas. Pilih apakah ingin menjadikannya Menu Mandiri atau Sub-menu (Dropdown).</p>
+        <p class="text-sm text-gray-500 mb-6">Sesuaikan tautan di bar menu atas. Gunakan tombol di bawah untuk menyusun menu biasa atau dropdown secara visual.</p>
         <div id="nav-editor-container" class="space-y-4 mb-6"></div>
-        <button onclick="addNavigationRow()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-4 py-2 rounded-lg text-sm transition">
-          + Tambah Baris Baru
-        </button>
-        <button onclick="saveNavigationMenu()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-lg text-sm ml-2 transition shadow-md">
-          Simpan Susunan Menu
-        </button>
+        <div class="flex space-x-2">
+          <button onclick="addNavigationRow('single')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-4 py-2 rounded-lg text-xs transition">
+            + Tambah Menu Biasa
+          </button>
+          <button onclick="addNavigationRow('parent')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold px-4 py-2 rounded-lg text-xs transition">
+            + Tambah Menu Dropdown (Grup)
+          </button>
+          <button onclick="saveNavigationMenu()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-lg text-xs transition shadow-md">
+            Simpan Susunan Menu
+          </button>
+        </div>
       </section>
 
       <!-- ==================== TAB 3: KATALOG KAMAR ==================== -->
       <section id="section-rooms" class="hidden bg-white p-8 rounded-xl shadow-sm border border-gray-200">
         <div class="flex justify-between items-center mb-6">
-          <h2 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-bed mr-2 text-blue-600"></i>Katalog Kamar</h2>
+          <h2 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-bed mr-2 text-blue-600"></i>Katalog Kamar Hostel</h2>
           <button onclick="openRoomForm()" class="bg-green-500 hover:bg-green-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition shadow-sm">
             + Tambah Tipe Kamar
           </button>
@@ -135,7 +141,7 @@
 
         <!-- MODAL KAMAR -->
         <div id="room-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div class="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+          <div class="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-fade-in">
             <h3 id="room-modal-title" class="text-xl font-bold mb-6 text-gray-800">Formulir Kamar</h3>
             <div class="space-y-4">
               <div>
@@ -150,15 +156,39 @@
                 <label class="block text-sm font-semibold mb-1">Harga Sewa Mulai Dari (Rp)</label>
                 <input type="number" id="room-price" class="w-full px-4 py-2 border rounded-lg outline-none">
               </div>
+              
+              <!-- INTEGRASI MULTI-IMAGE SLIDER KAMAR -->
               <div>
-                <label class="block text-sm font-semibold mb-1">Link Gambar Kamar</label>
-                <input type="text" id="room-image" class="w-full px-4 py-2 border text-xs font-mono rounded-lg outline-none">
-                <input type="file" onchange="uploadToCloudinary(this, 'room-image')" class="mt-2 text-xs">
+                <label class="block text-sm font-semibold mb-1">Link Gambar Kamar (Pisahkan dengan koma jika ada banyak gambar)</label>
+                <textarea id="room-image" rows="2" class="w-full p-2 border text-xs font-mono rounded-lg outline-none"></textarea>
+                <!-- Tombol Upload File langsung ke Kolom Gambar Kamar -->
+                <input type="file" onchange="uploadToRoomImages(this)" class="mt-2 text-xs">
                 <span id="upload-status-room" class="text-xs text-blue-500 ml-2"></span>
               </div>
-              <div>
-                <label class="block text-sm font-semibold mb-1">Fasilitas Kamar (Pisahkan dengan koma)</label>
-                <input type="text" id="room-amenities" placeholder="AC, Wifi, Private Bathroom" class="w-full px-4 py-2 border rounded-lg outline-none">
+
+              <!-- BARIS META-DATA ICON OTA (DIKONSOLIDASIKAN PINTAR) -->
+              <div class="grid grid-cols-2 gap-4 border-t pt-4">
+                <div>
+                  <label class="block text-xs font-bold mb-1">Kapasitas Orang (Tamu)</label>
+                  <input type="number" id="room-meta-capacity" placeholder="Contoh: 4" class="w-full px-3 py-1.5 border rounded-lg outline-none text-xs">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold mb-1">Detail Ranjang</label>
+                  <input type="text" id="room-meta-beds" placeholder="Contoh: 2 Queen Bed" class="w-full px-3 py-1.5 border rounded-lg outline-none text-xs">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold mb-1">Jumlah Kamar Mandi</label>
+                  <input type="number" id="room-meta-bathrooms" placeholder="Contoh: 2" class="w-full px-3 py-1.5 border rounded-lg outline-none text-xs">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold mb-1">Luas Kamar (m²)</label>
+                  <input type="text" id="room-meta-size" placeholder="Contoh: 150" class="w-full px-3 py-1.5 border rounded-lg outline-none text-xs">
+                </div>
+              </div>
+
+              <div class="border-t pt-2">
+                <label class="block text-sm font-semibold mb-1">Fasilitas Tambahan (Pisahkan dengan koma)</label>
+                <input type="text" id="room-amenities" placeholder="AC, Wifi, TV" class="w-full px-4 py-2 border rounded-lg outline-none">
               </div>
               <div>
                 <label class="block text-sm font-semibold mb-1">Deskripsi Kamar</label>
@@ -186,7 +216,7 @@
         <!-- MODAL ARTIKEL -->
         <div id="post-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div class="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <h3 id="post-modal-title" class="text-xl font-bold mb-6">Formulir Artikel</h3>
+            <h3 id="post-modal-title" class="text-xl font-bold mb-6 text-gray-800">Formulir Artikel</h3>
             <div class="space-y-4">
               <input type="hidden" id="post-id">
               <div>
@@ -199,7 +229,6 @@
               </div>
               <div>
                 <label class="block text-sm font-semibold mb-1">Konten Deskripsi (Visual WYSIWYG)</label>
-                <!-- Container untuk Quill Editor -->
                 <div id="post-editor" class="bg-white" style="height: 250px;"></div>
               </div>
               <div class="pt-12">
@@ -244,7 +273,6 @@
               </div>
               <div>
                 <label class="block text-sm font-semibold mb-1">Konten Halaman (Visual WYSIWYG)</label>
-                <!-- Container untuk Quill Editor -->
                 <div id="page-editor" class="bg-white" style="height: 300px;"></div>
               </div>
             </div>
@@ -299,6 +327,11 @@
         </div>
       </section>
     </div>
+
+    <!-- FOOTER MRD -->
+    <footer class="text-center py-6 text-sm text-gray-500 border-t border-gray-200 mt-12 bg-white">
+      &copy; 2026 <span class="font-bold text-blue-600">MRD Digital Solution</span>. All Rights Reserved.
+    </footer>
   </div>
 
   <!-- Quill Rich Editor JS Library -->
