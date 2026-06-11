@@ -288,14 +288,14 @@ function renderRooms(rooms) {
               </div>
             </div>
 
-            <!-- ROOM DESCRIPTION -->
-            <p class="text-slate-600 text-sm mb-6 leading-relaxed flex-grow">${descriptionStr}</p>
-            
-            <!-- AMENITIES -->
-            <div class="text-[11px] font-medium text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100">
+            <!-- AMENITIES (Moved up before description) -->
+            <div class="text-[11px] font-medium text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100 mb-5">
               <strong class="text-slate-700 block mb-1">Amenities:</strong> 
               ${list}
             </div>
+
+            <!-- ROOM DESCRIPTION -->
+            <p class="text-slate-600 text-sm leading-relaxed flex-grow">${descriptionStr}</p>
           </div>
         </div>
       `;
