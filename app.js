@@ -2,7 +2,6 @@ const API_URL = 'https://wa.mrdsolution.my.id/cms-api/api';
 const API_TOKEN = 'RAHASIA_CMS_HOSTEL_123';
 let slideIndex = 0;
 
-// State penyimpan index slider gambar kamar saat ini
 const roomSlideIndexes = {};
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -76,7 +75,7 @@ async function fetchFreshData() {
       renderPosts(resPosts.data);
     }
   } catch (err) {
-    console.error('Error sync fresh data:', err);
+    console.error('API Fetch failed, using cache:', err);
   }
 }
 
@@ -97,8 +96,8 @@ async function loadPageContent(slug) {
         document.getElementById('page-title').innerText = page.title;
         document.getElementById('page-content').innerHTML = page.content;
       } else {
-        document.getElementById('page-title').innerText = '404';
-        document.getElementById('page-content').innerHTML = '<p>Halaman tidak ditemukan.</p>';
+        document.getElementById('page-title').innerText = 'Page Not Found';
+        document.getElementById('page-content').innerHTML = '<p>Sorry, the page you are looking for does not exist.</p>';
       }
     }
   } catch (err) {
@@ -204,99 +203,106 @@ function startSlider() {
   }, 5000);
 }
 
-// LOGIKA RENDER KATALOG KAMAR (SLIDER INTERNAL & DESAIN OTA PREMIUM)
 function renderRooms(rooms) {
   const container = document.getElementById('rooms-container');
   if (!container || !rooms || rooms.length === 0) return;
   
   container.innerHTML = rooms.map(room => {
-    // Memproses multi-image (pisahkan dengan koma)
-    const images = room.image_url.split(',').map(img => img.trim());
-    const roomIdSafe = room.id.replace(/[^a-zA-Z0-9]/g, ''); // bersihkan ID untuk selector
-    roomSlideIndexes[roomIdSafe] = 0; // Set index awal slider kamar
+    try {
+      // Proteksi Tipe Data Kosong (Crash-proof protection)
+      const imageUrlStr = String(room.image_url || '');
+      const roomIdStr = String(room.id || 'RM-TEMP');
+      const amenitiesStr = String(room.amenities || '');
+      const descriptionStr = String(room.description || '');
 
-    // Dekode Amenities (Cek apakah berformat JSON atau teks biasa)
-    let capacity = "4", beds = "2 Queen bed", bathrooms = "2", size = "150m²", list = room.amenities;
-    
-    if (room.amenities.trim().startsWith('{')) {
-      try {
-        const meta = JSON.parse(room.amenities);
-        capacity = meta.capacity || capacity;
-        beds = meta.beds || beds;
-        bathrooms = meta.bathrooms || bathrooms;
-        size = meta.size || size;
-        list = meta.list || list;
-      } catch (e) {
-        console.error("Gagal membaca meta-data kamar", e);
+      const images = imageUrlStr.split(',').map(img => img.trim()).filter(img => img !== '');
+      const roomIdSafe = roomIdStr.replace(/[^a-zA-Z0-9]/g, ''); 
+      roomSlideIndexes[roomIdSafe] = 0; 
+
+      // Data Default (Bahasa Inggris)
+      let capacity = "4", beds = "2 Queen beds", bathrooms = "2", size = "150", list = amenitiesStr;
+      
+      if (amenitiesStr.trim().startsWith('{')) {
+        try {
+          const meta = JSON.parse(amenitiesStr);
+          capacity = meta.capacity || capacity;
+          beds = meta.beds || beds;
+          bathrooms = meta.bathrooms || bathrooms;
+          size = meta.size || size;
+          list = meta.list || list;
+        } catch (e) {
+          console.error("Failed to parse amenities JSON:", e);
+        }
       }
+
+      return `
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100/80 transition hover:shadow-md duration-300 flex flex-col h-full">
+          
+          <!-- ROOM IMAGE CAROUSEL -->
+          <div class="relative h-56 bg-slate-900 group overflow-hidden">
+            <div id="room-slider-${roomIdSafe}" class="absolute inset-0 w-full h-full flex transition-transform duration-500 ease-out">
+              ${images.map(img => `
+                <img src="${img}" class="w-full h-full object-cover shrink-0 select-none" alt="${room.room_type}">
+              `).join('')}
+            </div>
+
+            <!-- Carousel Navigation Arrows -->
+            ${images.length > 1 ? `
+              <button onclick="slideRoomImg('${roomIdSafe}', -1, ${images.length})" class="absolute left-3 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center transition opacity-0 group-hover:opacity-100 z-10">
+                <i class="fa-solid fa-chevron-left text-xs"></i>
+              </button>
+              <button onclick="slideRoomImg('${roomIdSafe}', 1, ${images.length})" class="absolute right-3 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center transition opacity-0 group-hover:opacity-100 z-10">
+                <i class="fa-solid fa-chevron-right text-xs"></i>
+              </button>
+            ` : ''}
+          </div>
+
+          <div class="p-6 flex flex-col flex-grow">
+            <h3 class="text-xl font-bold mb-1 text-slate-800 leading-tight">${room.room_type}</h3>
+            
+            <p class="text-blue-600 font-extrabold text-xl mb-4">
+              Rp ${parseInt(room.price_start_from || 0).toLocaleString('id-ID')} 
+              <span class="text-xs text-slate-400 font-normal">/ night</span>
+            </p>
+
+            <!-- ENGLISH BADGES -->
+            <div class="grid grid-cols-2 gap-3 mb-5 py-3 border-y border-slate-100 text-xs font-semibold text-slate-500">
+              <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-user-group text-slate-400 text-sm"></i>
+                <span>${capacity} Guests</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-bed text-slate-400 text-sm"></i>
+                <span>${beds}</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-shower text-slate-400 text-sm"></i>
+                <span>${bathrooms} Bathrooms</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-maximize text-slate-400 text-sm"></i>
+                <span>${size} m²</span>
+              </div>
+            </div>
+
+            <!-- ROOM DESCRIPTION -->
+            <p class="text-slate-600 text-sm mb-6 leading-relaxed flex-grow">${descriptionStr}</p>
+            
+            <!-- AMENITIES -->
+            <div class="text-[11px] font-medium text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100">
+              <strong class="text-slate-700 block mb-1">Amenities:</strong> 
+              ${list}
+            </div>
+          </div>
+        </div>
+      `;
+    } catch (roomErr) {
+      console.error("Skip rendering corrupt room data:", roomErr);
+      return ''; // Lewati kartu jika corrupt agar tidak menghalangi loading utama
     }
-
-    return `
-      <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100/80 transition hover:shadow-md duration-300 flex flex-col h-full">
-        
-        <!-- CAROUSEL/SLIDER GAMBAR KAMAR -->
-        <div class="relative h-56 bg-slate-900 group overflow-hidden">
-          <div id="room-slider-${roomIdSafe}" class="absolute inset-0 w-full h-full flex transition-transform duration-500 ease-out">
-            ${images.map(img => `
-              <img src="${img}" class="w-full h-full object-cover shrink-0 select-none" alt="${room.room_type}">
-            `).join('')}
-          </div>
-
-          <!-- Tombol Navigasi Slider Kamar (Hanya tampil jika gambar > 1) -->
-          ${images.length > 1 ? `
-            <button onclick="slideRoomImg('${roomIdSafe}', -1, ${images.length})" class="absolute left-3 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center transition opacity-0 group-hover:opacity-100 z-10">
-              <i class="fa-solid fa-chevron-left text-xs"></i>
-            </button>
-            <button onclick="slideRoomImg('${roomIdSafe}', 1, ${images.length})" class="absolute right-3 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center transition opacity-0 group-hover:opacity-100 z-10">
-              <i class="fa-solid fa-chevron-right text-xs"></i>
-            </button>
-          ` : ''}
-        </div>
-
-        <div class="p-6 flex flex-col flex-grow">
-          <h3 class="text-xl font-bold mb-1 text-slate-800 leading-tight">${room.room_type}</h3>
-          
-          <!-- SEKSI HARGA OTA PREMIUM -->
-          <p class="text-blue-600 font-extrabold text-xl mb-4">
-            Rp ${parseInt(room.price_start_from).toLocaleString('id-ID')} 
-            <span class="text-xs text-slate-400 font-normal">/ malam</span>
-          </p>
-
-          <!-- SEKSI ICON INDIKATOR PROFESIONAL (Wordpress/OTA style) -->
-          <div class="grid grid-cols-2 gap-3 mb-5 py-3 border-y border-slate-100 text-xs font-semibold text-slate-500">
-            <div class="flex items-center space-x-2">
-              <i class="fa-solid fa-user-group text-slate-400 text-sm"></i>
-              <span>${capacity} Tamu</span>
-            </div>
-            <div class="flex items-center space-x-2">
-              <i class="fa-solid fa-bed text-slate-400 text-sm"></i>
-              <span>${beds}</span>
-            </div>
-            <div class="flex items-center space-x-2">
-              <i class="fa-solid fa-shower text-slate-400 text-sm"></i>
-              <span>${bathrooms} Kamar Mandi</span>
-            </div>
-            <div class="flex items-center space-x-2">
-              <i class="fa-solid fa-maximize text-slate-400 text-sm"></i>
-              <span>${size} m²</span>
-            </div>
-          </div>
-
-          <!-- DESKRIPSI KAMAR -->
-          <p class="text-slate-600 text-sm mb-6 leading-relaxed flex-grow">${room.description}</p>
-          
-          <!-- FASILITAS SELEKTIF -->
-          <div class="text-[11px] font-medium text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100">
-            <strong class="text-slate-700 block mb-1">Fasilitas Tambahan:</strong> 
-            ${list}
-          </div>
-        </div>
-      </div>
-    `;
   }).join('');
 }
 
-// Handler Pergerakan Slider Kamar
 function slideRoomImg(roomIdSafe, direction, totalImgs) {
   const slider = document.getElementById(`room-slider-${roomIdSafe}`);
   let curIndex = roomSlideIndexes[roomIdSafe];
@@ -318,7 +324,7 @@ function renderPosts(posts) {
       <h3 class="text-xl font-bold mb-2 text-slate-800 leading-tight">${post.title}</h3>
       <div class="text-slate-600 text-sm mb-4 leading-relaxed">${post.content}</div>
       <span class="text-xs text-slate-400 font-semibold">
-        <i class="fa-regular fa-calendar-days mr-1"></i> Dipublikasikan pada: ${new Date(post.published_at).toLocaleDateString('id-ID')}
+        <i class="fa-regular fa-calendar-days mr-1"></i> Published at: ${new Date(post.published_at).toLocaleDateString('en-US')}
       </span>
     </div>
   `).join('');
