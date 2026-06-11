@@ -1,11 +1,10 @@
 const API_URL = 'https://wa.mrdsolution.my.id/cms-api/api';
-const API_TOKEN = 'RAHASIA_CMS_HOSTEL_123';
 let slideIndex = 0;
-
 const roomSlideIndexes = {};
 
 document.addEventListener('DOMContentLoaded', () => {
   handleRouting();
+  // Close dropdowns when clicking outside
   window.addEventListener('click', (e) => {
     if (!e.target.closest('.dropdown-trigger') && !e.target.closest('.dropdown-menu')) {
       document.querySelectorAll('.dropdown-menu').forEach(el => el.classList.add('hidden'));
@@ -51,18 +50,20 @@ function loadCachedData() {
   if (cachedPosts) renderPosts(JSON.parse(cachedPosts));
 }
 
+// AMBIL DATA SEGAR DARI VPS TANPA PERLU TOKEN (PUBLIC ACCESS)
 async function fetchFreshData() {
-  const headers = { 'X-API-KEY': API_TOKEN };
   try {
     const [resSettings, resRooms, resPosts] = await Promise.all([
-      fetch(`${API_URL}/settings`, { headers }).then(r => r.json()),
-      fetch(`${API_URL}/rooms`, { headers }).then(r => r.json()),
-      fetch(`${API_URL}/posts`, { headers }).then(r => r.json())
+      fetch(`${API_URL}/settings`).then(r => r.json()),
+      fetch(`${API_URL}/rooms`).then(r => r.json()),
+      fetch(`${API_URL}/posts`).then(r => r.json())
     ]);
 
     if (resSettings.status === 'success') {
       const settingsObj = {};
-      resSettings.data.forEach(item => { settingsObj[item.setting_key] = item.setting_value; });
+      resSettings.data.forEach(item => {
+        settingsObj[item.setting_key] = item.setting_value;
+      });
       localStorage.setItem('cms_settings', JSON.stringify(settingsObj));
       renderSettings(settingsObj);
     }
@@ -79,17 +80,17 @@ async function fetchFreshData() {
   }
 }
 
+// AMBIL HALAMAN KUSTOM SECARA PUBLIK TANPA TOKEN
 async function loadPageContent(slug) {
-  const headers = { 'X-API-KEY': API_TOKEN };
   try {
-    const resSettings = await fetch(`${API_URL}/settings`, { headers }).then(r => r.json());
+    const resSettings = await fetch(`${API_URL}/settings`).then(r => r.json());
     if (resSettings.status === 'success') {
       const settingsObj = {};
       resSettings.data.forEach(item => { settingsObj[item.setting_key] = item.setting_value; });
       renderSettings(settingsObj);
     }
 
-    const resPages = await fetch(`${API_URL}/pages`, { headers }).then(r => r.json());
+    const resPages = await fetch(`${API_URL}/pages`).then(r => r.json());
     if (resPages.status === 'success') {
       const page = resPages.data.find(p => p.slug === slug);
       if (page) {
@@ -101,7 +102,7 @@ async function loadPageContent(slug) {
       }
     }
   } catch (err) {
-    console.error(err);
+    console.error('Failed to load custom page:', err);
   }
 }
 
@@ -147,6 +148,7 @@ function renderSettings(settings) {
   }
 }
 
+// LOGIKA RENDER DROPDOWN NAVIGASI
 function renderNavigation(menuList) {
   const desktop = document.getElementById('desktop-menu');
   const mobile = document.getElementById('mobile-menu');
@@ -203,6 +205,7 @@ function startSlider() {
   }, 5000);
 }
 
+// LOGIKA RENDER KAMAR (ANTI-CRASH & DESAIN PREMIUM)
 function renderRooms(rooms) {
   const container = document.getElementById('rooms-container');
   if (!container || !rooms || rooms.length === 0) return;
@@ -298,7 +301,7 @@ function renderRooms(rooms) {
       `;
     } catch (roomErr) {
       console.error("Skip rendering corrupt room data:", roomErr);
-      return ''; // Lewati kartu jika corrupt agar tidak menghalangi loading utama
+      return ''; 
     }
   }).join('');
 }
