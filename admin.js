@@ -6,6 +6,7 @@ let CLOUDINARY_PRESET = 'Hostel_Jacky';
 
 let globalSettings = [];
 let globalTestimonials = [];
+let globalAlbumPhotos = [];
 
 let quillPostEditor = null;
 let quillPageEditor = null;
@@ -94,6 +95,7 @@ async function loadAllData() {
       fillSettingsForm(resSettings.data);
       renderNavigationEditor(resSettings.data);
       renderTestimonialsTab(resSettings.data);
+      renderAlbumTab(resSettings.data);
       
       const cloudNameItem = resSettings.data.find(d => d.setting_key === 'cloudinary_cloud_name');
       const presetItem = resSettings.data.find(d => d.setting_key === 'cloudinary_preset');
@@ -120,7 +122,7 @@ function fillSettingsForm(data) {
 }
 
 async function saveSettings() {
-  const keys = ['site_name', 'whatsapp_number', 'hero_title', 'hero_subtitle', 'slider_images', 'address', 'maps_iframe', 'instagram_toggle', 'instagram_embed_code', 'favicon_url', 'admin_token'];
+  const keys = ['site_name', 'whatsapp_number', 'hero_title', 'hero_subtitle', 'slider_images', 'address', 'maps_iframe', 'instagram_toggle', 'instagram_embed_code', 'favicon_url', 'admin_token', 'album_toggle'];
   const newToken = document.getElementById('setting-admin_token').value;
   const payload = keys.map(key => {
     let val = document.getElementById(`setting-${key}`).value;
@@ -282,12 +284,11 @@ async function saveNavigationMenu() {
   }
 }
 
-// --- TAB 3: KATALOG KAMAR (DENGAN SERIALISASI META-DATA SMART) ---
+// --- TAB 3: KATALOG KAMAR ---
 function renderRoomsList(rooms) {
   const container = document.getElementById('rooms-list-container');
   container.innerHTML = rooms.map(room => `
     <div class="border border-gray-200 p-4 rounded-lg flex space-x-4 items-center bg-gray-50 shadow-sm">
-      <!-- Mengambil index gambar pertama sebagai thumbnail -->
       <img src="${room.image_url.split(',')[0]}" class="w-16 h-16 object-cover rounded border">
       <div class="flex-grow">
         <h4 class="font-bold text-sm text-gray-800">${room.room_type}</h4>
@@ -306,13 +307,10 @@ function openRoomForm() {
   document.getElementById('room-image').value = '';
   document.getElementById('room-amenities').value = '';
   document.getElementById('room-desc').value = '';
-  
-  // Reset Meta Data
   document.getElementById('room-meta-capacity').value = '4';
   document.getElementById('room-meta-beds').value = '2 Queen bed';
   document.getElementById('room-meta-bathrooms').value = '2';
   document.getElementById('room-meta-size').value = '150';
-
   document.getElementById('room-modal-title').innerText = 'Tambah Kamar Baru';
   document.getElementById('room-modal').classList.remove('hidden');
 }
@@ -325,7 +323,6 @@ function editRoom(room) {
   document.getElementById('room-image').value = room.image_url;
   document.getElementById('room-desc').value = room.description;
 
-  // Dekompresi data Amenities JSON atau Teks Biasa (Backward Compatible)
   if (room.amenities.trim().startsWith('{')) {
     try {
       const meta = JSON.parse(room.amenities);
@@ -335,11 +332,9 @@ function editRoom(room) {
       document.getElementById('room-meta-size').value = meta.size || '150';
       document.getElementById('room-amenities').value = meta.list || '';
     } catch (e) {
-      // Jika corrupt, set default
       document.getElementById('room-amenities').value = room.amenities;
     }
   } else {
-    // Jika data lama berformat teks biasa
     document.getElementById('room-meta-capacity').value = '4';
     document.getElementById('room-meta-beds').value = '2 Queen bed';
     document.getElementById('room-meta-bathrooms').value = '2';
@@ -355,8 +350,6 @@ function closeRoomModal() { document.getElementById('room-modal').classList.add(
 
 async function saveRoom() {
   const rawImageUrl = document.getElementById('room-image').value;
-  
-  // Gabungkan field meta-data menjadi satu string JSON rapi di kolom amenities
   const metaObj = {
     capacity: document.getElementById('room-meta-capacity').value || "4",
     beds: document.getElementById('room-meta-beds').value || "2 Queen bed",
@@ -369,8 +362,8 @@ async function saveRoom() {
     id: document.getElementById('room-id').value,
     room_type: document.getElementById('room-type').value,
     price_start_from: document.getElementById('room-price').value,
-    image_url: rawImageUrl.split(',').map(url => autoConvertGoogleDriveLink(url)).join(','), // Konversi otomatis GDrive untuk banyak gambar
-    amenities: JSON.stringify(metaObj), // Simpan format JSON kustom ke database
+    image_url: rawImageUrl.split(',').map(url => autoConvertGoogleDriveLink(url)).join(','), 
+    amenities: JSON.stringify(metaObj), 
     description: document.getElementById('room-desc').value
   };
 
@@ -604,6 +597,92 @@ async function saveTestimonialsState() {
   }
 }
 
+// --- TAB 7: PENGELOLA GALERI ALBUM (FITUR BARU) ---
+function renderAlbumTab(settings) {
+  const container = document.getElementById('album-list-container');
+  const albumSetting = settings.find(s => s.setting_key === 'album_photos');
+
+  try {
+    globalAlbumPhotos = albumSetting ? JSON.parse(albumSetting.setting_value) : [];
+  } catch (e) {
+    globalAlbumPhotos = [];
+  }
+
+  container.innerHTML = globalAlbumPhotos.map((item, idx) => `
+    <div class="border border-gray-200 p-4 rounded-lg bg-gray-50 flex items-center space-x-4 shadow-sm relative">
+      <img src="${item.image_url}" class="w-16 h-16 object-cover rounded border">
+      <div class="flex-grow">
+        <p class="text-xs font-bold text-gray-800 leading-relaxed truncate max-w-[200px]">${item.caption || '(No caption)'}</p>
+      </div>
+      <div class="flex space-x-2">
+        <button onclick="editAlbum(${idx})" class="text-blue-600 hover:text-blue-800 text-xs font-semibold"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+        <button onclick="deleteAlbum(${idx})" class="text-red-500 hover:text-red-700 text-xs font-semibold"><i class="fa-solid fa-trash"></i> Hapus</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openAlbumForm() {
+  document.getElementById('album-index').value = '';
+  document.getElementById('album-image-url').value = '';
+  document.getElementById('album-caption').value = '';
+  document.getElementById('album-modal-title').innerText = 'Tambah Foto Album';
+  document.getElementById('album-modal').classList.remove('hidden');
+}
+
+function editAlbum(idx) {
+  const item = globalAlbumPhotos[idx];
+  document.getElementById('album-index').value = idx;
+  document.getElementById('album-image-url').value = item.image_url;
+  document.getElementById('album-caption').value = item.caption;
+  document.getElementById('album-modal-title').innerText = 'Edit Foto Album';
+  document.getElementById('album-modal').classList.remove('hidden');
+}
+
+function closeAlbumModal() { document.getElementById('album-modal').classList.add('hidden'); }
+
+function deleteAlbum(idx) {
+  if (confirm('Apakah Anda yakin ingin menghapus foto album ini?')) {
+    globalAlbumPhotos.splice(idx, 1);
+    saveAlbumState();
+  }
+}
+
+async function saveAlbum() {
+  const idx = document.getElementById('album-index').value;
+  const data = {
+    image_url: document.getElementById('album-image-url').value,
+    caption: document.getElementById('album-caption').value
+  };
+
+  if (idx !== '') {
+    globalAlbumPhotos[idx] = data;
+  } else {
+    globalAlbumPhotos.push(data);
+  }
+
+  await saveAlbumState();
+  closeAlbumModal();
+}
+
+async function saveAlbumState() {
+  const payload = [{ key: 'album_photos', value: JSON.stringify(globalAlbumPhotos) }];
+  try {
+    const res = await fetch(`${API_URL}/settings/update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-API-KEY': token },
+      body: JSON.stringify(payload)
+    }).then(r => r.json());
+
+    if (res.status === 'success') {
+      alert('Data album berhasil disinkronkan!');
+      loadAllData();
+    }
+  } catch (err) {
+    alert('Gagal sinkronisasi album.');
+  }
+}
+
 function autoGenerateSlug(title, targetId) {
   const slug = title.toLowerCase()
     .replace(/[^a-z0-9 -]/g, '')
@@ -662,7 +741,6 @@ async function uploadToRoomImages(input) {
     if (res.secure_url) {
       const txtArea = document.getElementById('room-image');
       const currentVal = txtArea.value.trim();
-      // Menggabungkan banyak gambar dipisahkan tanda koma
       txtArea.value = currentVal ? currentVal + ',' + res.secure_url : res.secure_url;
       if (statusSpan) statusSpan.innerText = 'Gambar Kamar Berhasil Ditambahkan ke Galeri!';
     } else {
@@ -673,7 +751,7 @@ async function uploadToRoomImages(input) {
   }
 }
 
-// --- LOGIKA UPLOAD LANGSUNG KE DALAM KOLOM SLIDER GAMBAR BANNER DEPAN ---
+// --- LOGIKA UPLOAD LANGSUNG KE DALAM KOLOM SLIDER GAMBAR ---
 async function uploadToSlider(input) {
   const file = input.files[0];
   if (!file) return;
@@ -704,27 +782,8 @@ async function uploadToSlider(input) {
   }
 }
 
-// --- SISTEM PINTAR DETEKSI GOOGLE DRIVE LINK ---
-function autoConvertGoogleDriveLink(url) {
-  if (!url) return '';
-  
-  const fileIdRegex = /\/file\/d\/([a-zA-Z0-9_-]+)/;
-  const queryIdRegex = /[?&]id=([a-zA-Z0-9_-]+)/;
-  
-  let match = url.match(fileIdRegex);
-  if (!match) {
-    match = url.match(queryIdRegex);
-  }
-  
-  if (match && match[1]) {
-    return `https://lh3.googleusercontent.com/u/0/d/${match[1]}`;
-  }
-  
-  return url.trim();
-}
-
 function switchTab(tab) {
-  const tabs = ['settings', 'menu', 'rooms', 'posts', 'pages', 'testimonials'];
+  const tabs = ['settings', 'menu', 'rooms', 'posts', 'pages', 'testimonials', 'album'];
   tabs.forEach(t => {
     const element = document.getElementById(`section-${t}`);
     const button = document.getElementById(`tab-${t}`);

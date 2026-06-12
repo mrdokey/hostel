@@ -45,6 +45,7 @@
         <button onclick="switchTab('posts')" id="tab-posts" class="border-b-2 border-transparent pb-3 px-4 font-semibold text-gray-500 hover:text-gray-700 outline-none transition">Artikel & Promo</button>
         <button onclick="switchTab('pages')" id="tab-pages" class="border-b-2 border-transparent pb-3 px-4 font-semibold text-gray-500 hover:text-gray-700 outline-none transition">Halaman Kustom</button>
         <button onclick="switchTab('testimonials')" id="tab-testimonials" class="border-b-2 border-transparent pb-3 px-4 font-semibold text-gray-500 hover:text-gray-700 outline-none transition">Testimoni</button>
+        <button onclick="switchTab('album')" id="tab-album" class="border-b-2 border-transparent pb-3 px-4 font-semibold text-gray-500 hover:text-gray-700 outline-none transition">Galeri Album</button>
       </div>
 
       <!-- ==================== TAB 1: GENERAL SETTINGS ==================== -->
@@ -156,17 +157,12 @@
                 <label class="block text-sm font-semibold mb-1">Harga Sewa Mulai Dari (Rp)</label>
                 <input type="number" id="room-price" class="w-full px-4 py-2 border rounded-lg outline-none">
               </div>
-              
-              <!-- INTEGRASI MULTI-IMAGE SLIDER KAMAR -->
               <div>
                 <label class="block text-sm font-semibold mb-1">Link Gambar Kamar (Pisahkan dengan koma jika ada banyak gambar)</label>
                 <textarea id="room-image" rows="2" class="w-full p-2 border text-xs font-mono rounded-lg outline-none"></textarea>
-                <!-- Tombol Upload File langsung ke Kolom Gambar Kamar -->
                 <input type="file" onchange="uploadToRoomImages(this)" class="mt-2 text-xs">
                 <span id="upload-status-room" class="text-xs text-blue-500 ml-2"></span>
               </div>
-
-              <!-- BARIS META-DATA ICON OTA (DIKONSOLIDASIKAN PINTAR) -->
               <div class="grid grid-cols-2 gap-4 border-t pt-4">
                 <div>
                   <label class="block text-xs font-bold mb-1">Kapasitas Orang (Tamu)</label>
@@ -185,7 +181,6 @@
                   <input type="text" id="room-meta-size" placeholder="Contoh: 150" class="w-full px-3 py-1.5 border rounded-lg outline-none text-xs">
                 </div>
               </div>
-
               <div class="border-t pt-2">
                 <label class="block text-sm font-semibold mb-1">Fasilitas Tambahan (Pisahkan dengan koma)</label>
                 <input type="text" id="room-amenities" placeholder="AC, Wifi, TV" class="w-full px-4 py-2 border rounded-lg outline-none">
@@ -326,6 +321,41 @@
           </div>
         </div>
       </section>
+
+      <!-- ==================== TAB 7: GALERI ALBUM (FITUR BARU) ==================== -->
+      <section id="section-album" class="hidden bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-images mr-2 text-blue-600"></i>Kelola Galeri Album Foto View</h2>
+          <button onclick="openAlbumForm()" class="bg-green-500 hover:bg-green-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition shadow-sm">
+            + Tambah Foto Album Baru
+          </button>
+        </div>
+        <div id="album-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+
+        <!-- MODAL ALBUM -->
+        <div id="album-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full">
+            <h3 id="album-modal-title" class="text-xl font-bold mb-6">Formulir Galeri Album</h3>
+            <div class="space-y-4">
+              <input type="hidden" id="album-index">
+              <div>
+                <label class="block text-sm font-semibold mb-1">Link Gambar Pemandangan</label>
+                <input type="text" id="album-image-url" class="w-full px-4 py-2 border text-xs font-mono rounded-lg outline-none">
+                <input type="file" onchange="uploadToCloudinary(this, 'album-image-url', 'upload-status-album-modal')" class="mt-2 text-xs">
+                <span id="upload-status-album-modal" class="text-xs text-blue-500 ml-2"></span>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">Takarir Gambar (Caption / Deskripsi Singkat)</label>
+                <textarea id="album-caption" rows="2" placeholder="Tuliskan keterangan suasana pemandangan..." class="w-full px-4 py-2 border rounded-lg outline-none text-sm"></textarea>
+              </div>
+            </div>
+            <div class="mt-8 flex space-x-4 justify-end">
+              <button onclick="closeAlbumModal()" class="bg-gray-400 text-white px-4 py-2 rounded-lg text-sm">Batal</button>
+              <button onclick="saveAlbum()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold">Simpan</button>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
 
     <!-- FOOTER MRD -->
@@ -337,6 +367,6 @@
   <!-- Quill Rich Editor JS Library -->
   <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
   <!-- LINK SCRIPT UTAMA ADMIN -->
-  <script src="admin.js?v=1.0.1"></script>
+  <script src="admin.js"></script>
 </body>
 </html>

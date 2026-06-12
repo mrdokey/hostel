@@ -1,3 +1,6 @@
+// ========================================================
+// GLOBAL ERROR CATCHER (Sistem Deteksi Error Faktual di Browser)
+// ========================================================
 window.addEventListener('error', function(e) {
   alert('JS ERROR DETECTED:\n\nError: ' + e.message + '\nFile: ' + e.filename + '\nLine: ' + e.lineno);
 });
@@ -5,6 +8,10 @@ window.addEventListener('error', function(e) {
 const API_URL = 'https://wa.mrdsolution.my.id/cms-api/api';
 let slideIndex = 0;
 const roomSlideIndexes = {};
+
+// State penyimpan index slider kamar dan galeri album
+let albumSlideIndex = 0;
+let totalAlbumPhotos = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
   handleRouting();
@@ -118,14 +125,6 @@ function renderSettings(settings) {
   document.getElementById('footer-site-name').innerText = settings.site_name || 'Hostel';
   document.getElementById('footer-address').innerText = settings.address || '';
   
-  // BARIS PERBAIKAN: MERUBAH JUDUL HERO SECARA DINAMIS DARI DATABASE
-  if (document.getElementById('hero-title')) {
-    document.getElementById('hero-title').innerText = settings.hero_title || 'Welcome';
-  }
-  if (document.getElementById('hero-subtitle')) {
-    document.getElementById('hero-subtitle').innerText = settings.hero_subtitle || '';
-  }
-
   if (settings.favicon_url) {
     document.getElementById('favicon-link').href = settings.favicon_url + "?v=" + new Date().getTime();
   }
@@ -147,6 +146,18 @@ function renderSettings(settings) {
       <div class="slide absolute inset-0 w-full h-full bg-cover bg-center ${idx === 0 ? 'active' : ''}" style="background-image: url('${img.trim()}')"></div>
     `).join('');
     startSlider();
+  }
+
+  // RENDER SEKSI GALERI ALBUM (ON/OFF)
+  if (settings.album_toggle === 'ON' && settings.album_photos && document.getElementById('album-section')) {
+    document.getElementById('album-section').classList.remove('hidden');
+    try {
+      renderAlbum(JSON.parse(settings.album_photos));
+    } catch (e) {
+      console.error("Gagal mendecode data JSON album", e);
+    }
+  } else if (document.getElementById('album-section')) {
+    document.getElementById('album-section').classList.add('hidden');
   }
 
   if (settings.instagram_toggle === 'ON' && settings.instagram_embed_code && document.getElementById('instagram-section')) {
@@ -209,14 +220,54 @@ function toggleDropdown(idx) {
   document.getElementById(`dropdown-${idx}`).classList.toggle('hidden');
 }
 
+// LOGIKA AUTO-SLIDER PINTAR (ANTI-CRASH UNTUK SATU GAMBAR)
 function startSlider() {
-  const slides = document.querySelectorAll('.slide');
-  if (slides.length <= 1) return;
+  const slides = document.querySelectorAll('#slider-container .slide');
+  if (!slides || slides.length <= 1) {
+    if (slides && slides.length === 1) {
+      slides[0].classList.add('active'); 
+    }
+    return;
+  }
   setInterval(() => {
-    slides[slideIndex].classList.remove('active');
+    if (slides[slideIndex]) slides[slideIndex].classList.remove('active');
     slideIndex = (slideIndex + 1) % slides.length;
-    slides[slideIndex].classList.add('active');
+    if (slides[slideIndex]) slides[slideIndex].classList.add('active');
   }, 5000);
+}
+
+// LOGIKA RENDER GALERI ALBUM PEMANDANGAN
+function renderAlbum(photos) {
+  const container = document.getElementById('album-slider');
+  if (!container || !photos || photos.length === 0) return;
+  
+  totalAlbumPhotos = photos.length;
+  albumSlideIndex = 0; 
+  container.style.transform = `translateX(0%)`;
+
+  container.innerHTML = photos.map(photo => {
+    const imgUrl = String(photo.image_url || '').trim();
+    const captionStr = String(photo.caption || '').trim();
+    return `
+      <div class="shrink-0 w-full h-full relative">
+        <img src="${imgUrl}" class="w-full h-full object-cover" alt="Gallery Photo">
+        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-8 pt-20 text-white text-center">
+          <p class="text-base md:text-lg font-bold tracking-wide drop-shadow-md leading-relaxed">${captionStr}</p>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function slideAlbum(direction) {
+  const slider = document.getElementById('album-slider');
+  if (!slider || totalAlbumPhotos <= 1) return;
+
+  albumSlideIndex += direction;
+  if (albumSlideIndex < 0) albumSlideIndex = totalAlbumPhotos - 1;
+  if (albumSlideIndex >= totalAlbumPhotos) albumSlideIndex = 0;
+
+  slider.style.transform = `translateX(-${albumSlideIndex * 100}%)`;
 }
 
 // LOGIKA RENDER KAMAR (ANTI-CRASH & DESAIN PREMIUM)
@@ -226,7 +277,6 @@ function renderRooms(rooms) {
   
   container.innerHTML = rooms.map(room => {
     try {
-      // Proteksi Tipe Data Kosong (Crash-proof protection)
       const imageUrlStr = String(room.image_url || '');
       const roomIdStr = String(room.id || 'RM-TEMP');
       const amenitiesStr = String(room.amenities || '');
@@ -236,7 +286,6 @@ function renderRooms(rooms) {
       const roomIdSafe = roomIdStr.replace(/[^a-zA-Z0-9]/g, ''); 
       roomSlideIndexes[roomIdSafe] = 0; 
 
-      // Data Default (Bahasa Inggris)
       let capacity = "4", beds = "2 Queen beds", bathrooms = "2", size = "150", list = amenitiesStr;
       
       if (amenitiesStr.trim().startsWith('{')) {
