@@ -322,13 +322,21 @@
         </div>
       </section>
 
-      <!-- ==================== TAB 7: GALERI ALBUM (FITUR BARU) ==================== -->
+      <!-- ==================== TAB 7: GALERI ALBUM ==================== -->
       <section id="section-album" class="hidden bg-white p-8 rounded-xl shadow-sm border border-gray-200">
         <div class="flex justify-between items-center mb-6">
           <h2 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-images mr-2 text-blue-600"></i>Kelola Galeri Album Foto View</h2>
-          <button onclick="openAlbumForm()" class="bg-green-500 hover:bg-green-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition shadow-sm">
-            + Tambah Foto Album Baru
-          </button>
+          <!-- SAKLAR ON/OFF ALBUM YANG RESMI DI SINI -->
+          <div class="flex items-center space-x-3">
+            <span class="text-sm font-semibold text-gray-600">Tampilkan Album di Web:</span>
+            <select id="setting-album_toggle" class="border rounded-lg px-3 py-1.5 text-sm outline-none">
+              <option value="ON">ON (Tampil)</option>
+              <option value="OFF">OFF (Sembunyikan)</option>
+            </select>
+            <button onclick="openAlbumForm()" class="bg-green-500 hover:bg-green-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition shadow-sm">
+              + Tambah Foto Album Baru
+            </button>
+          </div>
         </div>
         <div id="album-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
 
@@ -367,6 +375,6 @@
   <!-- Quill Rich Editor JS Library -->
   <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
   <!-- LINK SCRIPT UTAMA ADMIN -->
-  <script src="admin.js?v=99"></script>
+  <script src="admin.js"></script>
 </body>
 </html>

@@ -121,18 +121,25 @@ function fillSettingsForm(data) {
   if (tokenField) tokenField.value = token;
 }
 
+// SANGAT AMAN & CRASH-PROOF: PROTEKSI MULTI-KOLOM DARI KOAR NULL ERROR
 async function saveSettings() {
   const keys = ['site_name', 'whatsapp_number', 'hero_title', 'hero_subtitle', 'slider_images', 'address', 'maps_iframe', 'instagram_toggle', 'instagram_embed_code', 'favicon_url', 'admin_token', 'album_toggle'];
   const newToken = document.getElementById('setting-admin_token').value;
-  const payload = keys.map(key => {
-    let val = document.getElementById(`setting-${key}`).value;
-    if (key === 'slider_images') {
-      val = val.split(',').map(url => autoConvertGoogleDriveLink(url)).join(',');
+  
+  const payload = [];
+  
+  keys.forEach(key => {
+    const input = document.getElementById(`setting-${key}`);
+    if (input) { // Proteksi sakti: Lewati kueri jika element input belum ada di file HTML Anda
+      let val = input.value;
+      if (key === 'slider_images') {
+        val = val.split(',').map(url => autoConvertGoogleDriveLink(url)).join(',');
+      }
+      if (key === 'favicon_url') {
+        val = autoConvertGoogleDriveLink(val);
+      }
+      payload.push({ key: key, value: val });
     }
-    if (key === 'favicon_url') {
-      val = autoConvertGoogleDriveLink(val);
-    }
-    return { key: key, value: val };
   });
 
   try {
@@ -143,7 +150,7 @@ async function saveSettings() {
     }).then(r => r.json());
 
     if (res.status === 'success') {
-      alert('Pengaturan umum dan password berhasil diperbarui!');
+      alert('Pengaturan umum berhasil disimpan!');
       token = newToken;
       localStorage.setItem('cms_admin_token', token);
       loadAllData();
@@ -597,7 +604,7 @@ async function saveTestimonialsState() {
   }
 }
 
-// --- TAB 7: PENGELOLA GALERI ALBUM (FITUR BARU) ---
+// --- TAB 7: PENGELOLA GALERI ALBUM ---
 function renderAlbumTab(settings) {
   const container = document.getElementById('album-list-container');
   const albumSetting = settings.find(s => s.setting_key === 'album_photos');
@@ -780,6 +787,25 @@ async function uploadToSlider(input) {
   } catch (err) {
     if (statusSpan) statusSpan.innerText = 'Error jaringan Cloudinary.';
   }
+}
+
+// --- SISTEM PINTAR DETEKSI GOOGLE DRIVE LINK ---
+function autoConvertGoogleDriveLink(url) {
+  if (!url) return '';
+  
+  const fileIdRegex = /\/file\/d\/([a-zA-Z0-9_-]+)/;
+  const queryIdRegex = /[?&]id=([a-zA-Z0-9_-]+)/;
+  
+  let match = url.match(fileIdRegex);
+  if (!match) {
+    match = url.match(queryIdRegex);
+  }
+  
+  if (match && match[1]) {
+    return `https://lh3.googleusercontent.com/u/0/d/${match[1]}`;
+  }
+  
+  return url.trim();
 }
 
 function switchTab(tab) {
