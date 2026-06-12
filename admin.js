@@ -7,6 +7,7 @@ let CLOUDINARY_PRESET = 'Hostel_Jacky';
 let globalSettings = [];
 let globalTestimonials = [];
 let globalAlbumPhotos = [];
+let globalPages = []; // Penyimpan state halaman kustom global (Anti-Crash HTML)
 
 let quillPostEditor = null;
 let quillPageEditor = null;
@@ -104,7 +105,10 @@ async function loadAllData() {
     }
     if (resRooms.status === 'success') renderRoomsList(resRooms.data);
     if (resPosts.status === 'success') renderPostsList(resPosts.data);
-    if (resPages.status === 'success') renderPagesList(resPages.data);
+    if (resPages.status === 'success') {
+      globalPages = resPages.data; // Simpan ke state global
+      renderPagesList(resPages.data);
+    }
   } catch (err) {
     alert('Terjadi kesalahan otentikasi server.');
     logout();
@@ -121,16 +125,14 @@ function fillSettingsForm(data) {
   if (tokenField) tokenField.value = token;
 }
 
-// SANGAT AMAN & CRASH-PROOF: PROTEKSI MULTI-KOLOM DARI KOAR NULL ERROR
 async function saveSettings() {
   const keys = ['site_name', 'whatsapp_number', 'hero_title', 'hero_subtitle', 'slider_images', 'address', 'maps_iframe', 'instagram_toggle', 'instagram_embed_code', 'favicon_url', 'admin_token', 'album_toggle'];
   const newToken = document.getElementById('setting-admin_token').value;
-  
   const payload = [];
   
   keys.forEach(key => {
     const input = document.getElementById(`setting-${key}`);
-    if (input) { // Proteksi sakti: Lewati kueri jika element input belum ada di file HTML Anda
+    if (input) {
       let val = input.value;
       if (key === 'slider_images') {
         val = val.split(',').map(url => autoConvertGoogleDriveLink(url)).join(',');
@@ -453,16 +455,17 @@ async function savePost() {
   }
 }
 
-// --- TAB 5: HALAMAN KUSTOM ---
+// --- TAB 5: HALAMAN KUSTOM (DENGAN FIX SAKTI ANTI-HTML CRASH) ---
 function renderPagesList(pages) {
   const container = document.getElementById('pages-list-container');
+  // Ambil data halaman kustom dinamis menggunakan ID (Aman dari kutip/line-break)
   container.innerHTML = pages.map(page => `
     <div class="border border-gray-200 p-4 rounded-lg flex justify-between items-center bg-gray-50 shadow-sm">
       <div>
         <h4 class="font-bold text-sm text-gray-800">${page.title}</h4>
         <span class="text-xs text-gray-400 font-mono">?page=${page.slug}</span>
       </div>
-      <button onclick='editPage(${JSON.stringify(page)})' class="bg-blue-100 hover:bg-blue-200 text-blue-600 text-xs px-3 py-1.5 rounded font-bold">Edit</button>
+      <button onclick="editPage(${page.id})" class="bg-blue-100 hover:bg-blue-200 text-blue-600 text-xs px-3 py-1.5 rounded font-bold">Edit</button>
     </div>
   `).join('');
 }
@@ -476,7 +479,11 @@ function openPageForm() {
   document.getElementById('page-modal').classList.remove('hidden');
 }
 
-function editPage(page) {
+// Mengambil object halaman langsung dari state global memproses ID (Tanpa Inline Stringify)
+function editPage(id) {
+  const page = globalPages.find(p => p.id == id);
+  if (!page) return;
+
   document.getElementById('page-id').value = page.id;
   document.getElementById('page-title-input').value = page.title;
   document.getElementById('page-slug').value = page.slug;
@@ -789,7 +796,6 @@ async function uploadToSlider(input) {
   }
 }
 
-// --- SISTEM PINTAR DETEKSI GOOGLE DRIVE LINK ---
 function autoConvertGoogleDriveLink(url) {
   if (!url) return '';
   
