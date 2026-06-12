@@ -1,6 +1,3 @@
-// ========================================================
-// GLOBAL ERROR CATCHER (Sistem Deteksi Error Faktual di Browser HP/Tablet)
-// ========================================================
 window.addEventListener('error', function(e) {
   alert('JS ERROR DETECTED:\n\nError: ' + e.message + '\nFile: ' + e.filename + '\nLine: ' + e.lineno);
 });
@@ -121,6 +118,14 @@ function renderSettings(settings) {
   document.getElementById('footer-site-name').innerText = settings.site_name || 'Hostel';
   document.getElementById('footer-address').innerText = settings.address || '';
   
+  // BARIS PERBAIKAN: MERUBAH JUDUL HERO SECARA DINAMIS DARI DATABASE
+  if (document.getElementById('hero-title')) {
+    document.getElementById('hero-title').innerText = settings.hero_title || 'Welcome';
+  }
+  if (document.getElementById('hero-subtitle')) {
+    document.getElementById('hero-subtitle').innerText = settings.hero_subtitle || '';
+  }
+
   if (settings.favicon_url) {
     document.getElementById('favicon-link').href = settings.favicon_url + "?v=" + new Date().getTime();
   }
