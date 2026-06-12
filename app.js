@@ -121,17 +121,23 @@ async function loadPageContent(slug) {
 
 function renderSettings(settings) {
   if (!settings) return;
-  document.getElementById('nav-brand').innerText = settings.site_name || 'Hostel';
-  document.getElementById('footer-site-name').innerText = settings.site_name || 'Hostel';
-  document.getElementById('footer-address').innerText = settings.address || '';
+
+  // 1. UBAH TEKS HERO DAN NAVIGASI PALING PERTAMA (Paling Krusial)
+  if (document.getElementById('nav-brand')) document.getElementById('nav-brand').innerText = settings.site_name || 'Hostel';
+  if (document.getElementById('footer-site-name')) document.getElementById('footer-site-name').innerText = settings.site_name || 'Hostel';
+  if (document.getElementById('footer-address')) document.getElementById('footer-address').innerText = settings.address || '';
   
-  if (settings.favicon_url) {
+  if (document.getElementById('hero-title')) document.getElementById('hero-title').innerText = settings.hero_title || 'Welcome';
+  if (document.getElementById('hero-subtitle')) document.getElementById('hero-subtitle').innerText = settings.hero_subtitle || '';
+
+  // 2. FAVICON DAN WA
+  if (settings.favicon_url && document.getElementById('favicon-link')) {
     document.getElementById('favicon-link').href = settings.favicon_url + "?v=" + new Date().getTime();
   }
 
   const waLink = settings.whatsapp_number ? `https://wa.me/${settings.whatsapp_number}` : '#';
   if (document.getElementById('btn-hero-wa')) document.getElementById('btn-hero-wa').href = waLink;
-  document.getElementById('floating-wa').href = waLink;
+  if (document.getElementById('floating-wa')) document.getElementById('floating-wa').href = waLink;
 
   if (document.getElementById('maps-iframe')) document.getElementById('maps-iframe').src = settings.maps_iframe || '';
 
@@ -139,16 +145,7 @@ function renderSettings(settings) {
     try { renderNavigation(JSON.parse(settings.navigation_menu)); } catch (e) {}
   }
 
-  if (document.getElementById('slider-container') && settings.slider_images) {
-    const images = settings.slider_images.split(',');
-    const sliderContainer = document.getElementById('slider-container');
-    sliderContainer.innerHTML = images.map((img, idx) => `
-      <div class="slide absolute inset-0 w-full h-full bg-cover bg-center ${idx === 0 ? 'active' : ''}" style="background-image: url('${img.trim()}')"></div>
-    `).join('');
-    startSlider();
-  }
-
-  // RENDER SEKSI GALERI ALBUM (ON/OFF)
+  // 3. RENDER ALBUM & INSTAGRAM TERLEBIH DAHULU
   if (settings.album_toggle === 'ON' && settings.album_photos && document.getElementById('album-section')) {
     document.getElementById('album-section').classList.remove('hidden');
     try {
@@ -171,64 +168,26 @@ function renderSettings(settings) {
   if (settings.testimonials) {
     try { renderTestimonials(JSON.parse(settings.testimonials)); } catch (e) {}
   }
-}
 
-// LOGIKA RENDER DROPDOWN NAVIGASI
-function renderNavigation(menuList) {
-  const desktop = document.getElementById('desktop-menu');
-  const mobile = document.getElementById('mobile-menu');
-
-  desktop.innerHTML = menuList.map((item, idx) => {
-    if (item.children && item.children.length > 0) {
-      return `
-        <div class="relative dropdown-container">
-          <button onclick="toggleDropdown(${idx})" class="dropdown-trigger hover:text-blue-600 transition flex items-center space-x-1 outline-none">
-            <span>${item.label}</span> <i class="fa-solid fa-chevron-down text-xs"></i>
-          </button>
-          <div id="dropdown-${idx}" class="dropdown-menu hidden absolute left-0 mt-2 w-48 bg-white border border-slate-100 rounded-xl shadow-md py-2 text-sm z-50">
-            ${item.children.map(sub => `
-              <a href="${sub.url}" class="block px-4 py-2 hover:bg-slate-50 hover:text-blue-600 transition" ${sub.url.startsWith('?page=') ? 'onclick="setTimeout(handleRouting, 50)"' : ''}>${sub.label}</a>
-            `).join('')}
-          </div>
-        </div>
-      `;
+  // 4. RENDER SLIDER PALING TERAKHIR (Agar kalau error tidak mematikan fitur lain)
+  if (document.getElementById('slider-container') && settings.slider_images) {
+    const images = settings.slider_images.split(',');
+    const sliderContainer = document.getElementById('slider-container');
+    sliderContainer.innerHTML = images.map((img, idx) => `
+      <div class="slide absolute inset-0 w-full h-full bg-cover bg-center ${idx === 0 ? 'active' : ''}" style="background-image: url('${img.trim()}')"></div>
+    `).join('');
+    
+    // Jalankan auto-slider hanya jika gambar lebih dari 1
+    if (images.length > 1) {
+      startSlider();
     }
-    return `<a href="${item.url}" class="hover:text-blue-600 transition" ${item.url.startsWith('?page=') ? 'onclick="setTimeout(handleRouting, 50)"' : ''}>${item.label}</a>`;
-  }).join('');
-
-  mobile.innerHTML = menuList.map((item, idx) => {
-    if (item.children && item.children.length > 0) {
-      return `
-        <div class="flex flex-col space-y-2">
-          <span class="text-slate-400 font-bold text-xs uppercase px-2">${item.label}</span>
-          <div class="flex flex-col space-y-2 pl-4">
-            ${item.children.map(sub => `
-              <a href="${sub.url}" onclick="toggleMobileMenu(); ${sub.url.startsWith('?page=') ? 'setTimeout(handleRouting, 50)' : ''}" class="hover:text-blue-600 text-sm">${sub.label}</a>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    }
-    return `<a href="${item.url}" onclick="toggleMobileMenu(); ${item.url.startsWith('?page=') ? 'setTimeout(handleRouting, 50)' : ''}" class="hover:text-blue-600">${item.label}</a>`;
-  }).join('');
+  }
 }
 
-function toggleDropdown(idx) {
-  document.querySelectorAll('.dropdown-menu').forEach((el, i) => {
-    if (i !== idx) el.classList.add('hidden');
-  });
-  document.getElementById(`dropdown-${idx}`).classList.toggle('hidden');
-}
-
-// LOGIKA AUTO-SLIDER PINTAR (ANTI-CRASH UNTUK SATU GAMBAR)
 function startSlider() {
   const slides = document.querySelectorAll('#slider-container .slide');
-  if (!slides || slides.length <= 1) {
-    if (slides && slides.length === 1) {
-      slides[0].classList.add('active'); 
-    }
-    return;
-  }
+  if (!slides || slides.length <= 1) return;
+  
   setInterval(() => {
     if (slides[slideIndex]) slides[slideIndex].classList.remove('active');
     slideIndex = (slideIndex + 1) % slides.length;
