@@ -1,3 +1,10 @@
+// ========================================================
+// GLOBAL ERROR CATCHER (Sistem Deteksi Error Faktual di Browser HP/Tablet)
+// ========================================================
+window.addEventListener('error', function(e) {
+  alert('JS ERROR DETECTED:\n\nError: ' + e.message + '\nFile: ' + e.filename + '\nLine: ' + e.lineno);
+});
+
 const API_URL = 'https://wa.mrdsolution.my.id/cms-api/api';
 let slideIndex = 0;
 const roomSlideIndexes = {};
@@ -77,6 +84,7 @@ async function fetchFreshData() {
     }
   } catch (err) {
     console.error('API Fetch failed, using cache:', err);
+    alert('API FETCH ERROR:\n\nJika pesan ini muncul, koneksi internet tablet Anda ke VPS diblokir atau timed out.\n\nDetail: ' + err.message);
   }
 }
 
@@ -103,6 +111,7 @@ async function loadPageContent(slug) {
     }
   } catch (err) {
     console.error('Failed to load custom page:', err);
+    alert('PAGE LOAD ERROR:\n\nDetail: ' + err.message);
   }
 }
 
