@@ -15,7 +15,7 @@ let totalAlbumPhotos = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
   handleRouting();
-  // Close dropdowns when clicking outside
+  // Menutup dropdown navigasi saat klik di luar area
   window.addEventListener('click', (e) => {
     if (!e.target.closest('.dropdown-trigger') && !e.target.closest('.dropdown-menu')) {
       document.querySelectorAll('.dropdown-menu').forEach(el => el.classList.add('hidden'));
@@ -61,7 +61,7 @@ function loadCachedData() {
   if (cachedPosts) renderPosts(JSON.parse(cachedPosts));
 }
 
-// AMBIL DATA SEGAR DARI VPS TANPA PERLU TOKEN (PUBLIC ACCESS)
+// AMBIL DATA SEGAR DARI VPS SECARA PUBLIK (TANPA TOKEN)
 async function fetchFreshData() {
   try {
     const [resSettings, resRooms, resPosts] = await Promise.all([
@@ -92,7 +92,7 @@ async function fetchFreshData() {
   }
 }
 
-// AMBIL HALAMAN KUSTOM SECARA PUBLIK TANPA TOKEN
+// AMBIL HALAMAN KUSTOM SECARA PUBLIK (TANPA TOKEN)
 async function loadPageContent(slug) {
   try {
     const resSettings = await fetch(`${API_URL}/settings`).then(r => r.json());
@@ -119,10 +119,13 @@ async function loadPageContent(slug) {
   }
 }
 
+// ==========================================
+// RENDERING PENGATURAN UTAMA WEBSITE
+// ==========================================
 function renderSettings(settings) {
   if (!settings) return;
 
-  // 1. UBAH TEKS HERO DAN NAVIGASI PALING PERTAMA (Paling Krusial)
+  // 1. Teks Identitas dan Hero
   if (document.getElementById('nav-brand')) document.getElementById('nav-brand').innerText = settings.site_name || 'Hostel';
   if (document.getElementById('footer-site-name')) document.getElementById('footer-site-name').innerText = settings.site_name || 'Hostel';
   if (document.getElementById('footer-address')) document.getElementById('footer-address').innerText = settings.address || '';
@@ -130,7 +133,7 @@ function renderSettings(settings) {
   if (document.getElementById('hero-title')) document.getElementById('hero-title').innerText = settings.hero_title || 'Welcome';
   if (document.getElementById('hero-subtitle')) document.getElementById('hero-subtitle').innerText = settings.hero_subtitle || '';
 
-  // 2. FAVICON DAN WA
+  // 2. Favicon & Tautan WhatsApp
   if (settings.favicon_url && document.getElementById('favicon-link')) {
     document.getElementById('favicon-link').href = settings.favicon_url + "?v=" + new Date().getTime();
   }
@@ -141,11 +144,12 @@ function renderSettings(settings) {
 
   if (document.getElementById('maps-iframe')) document.getElementById('maps-iframe').src = settings.maps_iframe || '';
 
+  // 3. Menu Navigasi Bertingkat (Dengan Pelindung Crash)
   if (settings.navigation_menu) {
     try { renderNavigation(JSON.parse(settings.navigation_menu)); } catch (e) {}
   }
 
-  // 3. RENDER ALBUM & INSTAGRAM TERLEBIH DAHULU
+  // 4. Galeri Album Foto (Tampil Sesuai Toggle)
   if (settings.album_toggle === 'ON' && settings.album_photos && document.getElementById('album-section')) {
     document.getElementById('album-section').classList.remove('hidden');
     try {
@@ -157,6 +161,7 @@ function renderSettings(settings) {
     document.getElementById('album-section').classList.add('hidden');
   }
 
+  // 5. Widget Instagram (Tampil Sesuai Toggle)
   if (settings.instagram_toggle === 'ON' && settings.instagram_embed_code && document.getElementById('instagram-section')) {
     document.getElementById('instagram-section').classList.remove('hidden');
     document.getElementById('instagram-container').innerHTML = settings.instagram_embed_code;
@@ -165,11 +170,12 @@ function renderSettings(settings) {
     document.getElementById('instagram-section').classList.add('hidden');
   }
 
+  // 6. Testimoni Tamu
   if (settings.testimonials) {
     try { renderTestimonials(JSON.parse(settings.testimonials)); } catch (e) {}
   }
 
-  // 4. RENDER SLIDER PALING TERAKHIR (Agar kalau error tidak mematikan fitur lain)
+  // 7. Slider Hero (Dijalankan Paling Akhir Agar Tidak Memblokir Fungsi Lain Jika Gagal)
   if (document.getElementById('slider-container') && settings.slider_images) {
     const images = settings.slider_images.split(',');
     const sliderContainer = document.getElementById('slider-container');
@@ -177,17 +183,68 @@ function renderSettings(settings) {
       <div class="slide absolute inset-0 w-full h-full bg-cover bg-center ${idx === 0 ? 'active' : ''}" style="background-image: url('${img.trim()}')"></div>
     `).join('');
     
-    // Jalankan auto-slider hanya jika gambar lebih dari 1
-    if (images.length > 1) {
-      startSlider();
-    }
+    startSlider();
   }
 }
 
+// LOGIKA RENDER MENU NAVIGASI BERTINGKAT (ANTI-CRASH)
+function renderNavigation(menuList) {
+  const desktop = document.getElementById('desktop-menu');
+  const mobile = document.getElementById('mobile-menu');
+
+  if (!desktop || !mobile || !Array.isArray(menuList)) return;
+
+  desktop.innerHTML = menuList.map((item, idx) => {
+    if (item.children && Array.isArray(item.children) && item.children.length > 0) {
+      return `
+        <div class="relative dropdown-container">
+          <button onclick="toggleDropdown(${idx})" class="dropdown-trigger hover:text-blue-600 transition flex items-center space-x-1 outline-none">
+            <span>${item.label || ''}</span> <i class="fa-solid fa-chevron-down text-xs"></i>
+          </button>
+          <div id="dropdown-${idx}" class="dropdown-menu hidden absolute left-0 mt-2 w-48 bg-white border border-slate-100 rounded-xl shadow-md py-2 text-sm z-50">
+            ${item.children.map(sub => `
+              <a href="${sub.url || '#'}" class="block px-4 py-2 hover:bg-slate-50 hover:text-blue-600 transition" ${(sub.url || '').startsWith('?page=') ? 'onclick="setTimeout(handleRouting, 50)"' : ''}>${sub.label || ''}</a>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+    return `<a href="${item.url || '#'}" class="hover:text-blue-600 transition" ${(item.url || '').startsWith('?page=') ? 'onclick="setTimeout(handleRouting, 50)"' : ''}>${item.label || ''}</a>`;
+  }).join('');
+
+  mobile.innerHTML = menuList.map((item, idx) => {
+    if (item.children && Array.isArray(item.children) && item.children.length > 0) {
+      return `
+        <div class="flex flex-col space-y-2">
+          <span class="text-slate-400 font-bold text-xs uppercase px-2">${item.label || ''}</span>
+          <div class="flex flex-col space-y-2 pl-4">
+            ${item.children.map(sub => `
+              <a href="${sub.url || '#'}" onclick="toggleMobileMenu(); ${(sub.url || '').startsWith('?page=') ? 'setTimeout(handleRouting, 50)' : ''}" class="hover:text-blue-600 text-sm">${sub.label || ''}</a>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+    return `<a href="${item.url || '#'}" onclick="toggleMobileMenu(); ${(item.url || '').startsWith('?page=') ? 'setTimeout(handleRouting, 50)' : ''}" class="hover:text-blue-600">${item.label || ''}</a>`;
+  }).join('');
+}
+
+function toggleDropdown(idx) {
+  document.querySelectorAll('.dropdown-menu').forEach((el, i) => {
+    if (i !== idx) el.classList.add('hidden');
+  });
+  document.getElementById(`dropdown-${idx}`).classList.toggle('hidden');
+}
+
+// LOGIKA RENDER AUTO-SLIDER BANNER (ANTI-CRASH 1 GAMBAR)
 function startSlider() {
   const slides = document.querySelectorAll('#slider-container .slide');
-  if (!slides || slides.length <= 1) return;
-  
+  if (!slides || slides.length <= 1) {
+    if (slides && slides.length === 1) {
+      slides[0].classList.add('active'); 
+    }
+    return;
+  }
   setInterval(() => {
     if (slides[slideIndex]) slides[slideIndex].classList.remove('active');
     slideIndex = (slideIndex + 1) % slides.length;
@@ -195,7 +252,7 @@ function startSlider() {
   }, 5000);
 }
 
-// LOGIKA RENDER GALERI ALBUM PEMANDANGAN
+// LOGIKA RENDER GALERI ALBUM FOTO PEMANDANGAN
 function renderAlbum(photos) {
   const container = document.getElementById('album-slider');
   if (!container || !photos || photos.length === 0) return;
@@ -229,7 +286,7 @@ function slideAlbum(direction) {
   slider.style.transform = `translateX(-${albumSlideIndex * 100}%)`;
 }
 
-// LOGIKA RENDER KAMAR (ANTI-CRASH & DESAIN PREMIUM)
+// LOGIKA RENDER KATALOG KAMAR
 function renderRooms(rooms) {
   const container = document.getElementById('rooms-container');
   if (!container || !rooms || rooms.length === 0) return;
@@ -255,15 +312,12 @@ function renderRooms(rooms) {
           bathrooms = meta.bathrooms || bathrooms;
           size = meta.size || size;
           list = meta.list || list;
-        } catch (e) {
-          console.error("Failed to parse amenities JSON:", e);
-        }
+        } catch (e) {}
       }
 
       return `
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100/80 transition hover:shadow-md duration-300 flex flex-col h-full">
           
-          <!-- ROOM IMAGE CAROUSEL -->
           <div class="relative h-56 bg-slate-900 group overflow-hidden">
             <div id="room-slider-${roomIdSafe}" class="absolute inset-0 w-full h-full flex transition-transform duration-500 ease-out">
               ${images.map(img => `
@@ -271,7 +325,6 @@ function renderRooms(rooms) {
               `).join('')}
             </div>
 
-            <!-- Carousel Navigation Arrows -->
             ${images.length > 1 ? `
               <button onclick="slideRoomImg('${roomIdSafe}', -1, ${images.length})" class="absolute left-3 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center transition opacity-0 group-hover:opacity-100 z-10">
                 <i class="fa-solid fa-chevron-left text-xs"></i>
@@ -290,7 +343,6 @@ function renderRooms(rooms) {
               <span class="text-xs text-slate-400 font-normal">/ night</span>
             </p>
 
-            <!-- ENGLISH BADGES -->
             <div class="grid grid-cols-2 gap-3 mb-5 py-3 border-y border-slate-100 text-xs font-semibold text-slate-500">
               <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-user-group text-slate-400 text-sm"></i>
@@ -310,19 +362,16 @@ function renderRooms(rooms) {
               </div>
             </div>
 
-            <!-- AMENITIES (Moved up before description) -->
             <div class="text-[11px] font-medium text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100 mb-5">
               <strong class="text-slate-700 block mb-1">Amenities:</strong> 
               ${list}
             </div>
 
-            <!-- ROOM DESCRIPTION -->
             <p class="text-slate-600 text-sm leading-relaxed flex-grow">${descriptionStr}</p>
           </div>
         </div>
       `;
     } catch (roomErr) {
-      console.error("Skip rendering corrupt room data:", roomErr);
       return ''; 
     }
   }).join('');
@@ -340,6 +389,7 @@ function slideRoomImg(roomIdSafe, direction, totalImgs) {
   slider.style.transform = `translateX(-${curIndex * 100}%)`;
 }
 
+// LOGIKA RENDER PROMO & ARTIKEL
 function renderPosts(posts) {
   const container = document.getElementById('posts-container');
   if (!container || !posts || posts.length === 0) return;
@@ -355,6 +405,7 @@ function renderPosts(posts) {
   `).join('');
 }
 
+// LOGIKA RENDER TESTIMONI
 function renderTestimonials(list) {
   const container = document.getElementById('testimonials-container');
   if (!container || !list || list.length === 0) return;
