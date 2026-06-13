@@ -4,11 +4,15 @@ let token = '';
 let CLOUDINARY_CLOUD_NAME = 'dnobafum2'; 
 let CLOUDINARY_PRESET = 'Hostel_Jacky'; 
 
+// State Penyimpan Data Global (Kebal dari Bug Kebocoran Tanda Kutip & Emoji HTML)
 let globalSettings = [];
 let globalTestimonials = [];
 let globalAlbumPhotos = [];
-let globalPages = []; // Penyimpan state halaman kustom global (Anti-Crash HTML)
+let globalPages = [];
+let globalPosts = []; // State Global Artikel
+let globalRooms = []; // State Global Kamar
 
+// Instance Quill Editor
 let quillPostEditor = null;
 let quillPageEditor = null;
 
@@ -103,10 +107,16 @@ async function loadAllData() {
       if (cloudNameItem) CLOUDINARY_CLOUD_NAME = cloudNameItem.setting_value;
       if (presetItem) CLOUDINARY_PRESET = presetItem.setting_value;
     }
-    if (resRooms.status === 'success') renderRoomsList(resRooms.data);
-    if (resPosts.status === 'success') renderPostsList(resPosts.data);
+    if (resRooms.status === 'success') {
+      globalRooms = resRooms.data; // Simpan ke memori global
+      renderRoomsList(resRooms.data);
+    }
+    if (resPosts.status === 'success') {
+      globalPosts = resPosts.data; // Simpan ke memori global
+      renderPostsList(resPosts.data);
+    }
     if (resPages.status === 'success') {
-      globalPages = resPages.data; // Simpan ke state global
+      globalPages = resPages.data; // Simpan ke memori global
       renderPagesList(resPages.data);
     }
   } catch (err) {
@@ -128,11 +138,12 @@ function fillSettingsForm(data) {
 async function saveSettings() {
   const keys = ['site_name', 'whatsapp_number', 'hero_title', 'hero_subtitle', 'slider_images', 'address', 'maps_iframe', 'instagram_toggle', 'instagram_embed_code', 'favicon_url', 'admin_token', 'album_toggle'];
   const newToken = document.getElementById('setting-admin_token').value;
+  
   const payload = [];
   
   keys.forEach(key => {
     const input = document.getElementById(`setting-${key}`);
-    if (input) {
+    if (input) { 
       let val = input.value;
       if (key === 'slider_images') {
         val = val.split(',').map(url => autoConvertGoogleDriveLink(url)).join(',');
@@ -293,7 +304,7 @@ async function saveNavigationMenu() {
   }
 }
 
-// --- TAB 3: KATALOG KAMAR ---
+// --- TAB 3: KATALOG KAMAR (SUDAH FIX MEMORI AMAN) ---
 function renderRoomsList(rooms) {
   const container = document.getElementById('rooms-list-container');
   container.innerHTML = rooms.map(room => `
@@ -303,7 +314,8 @@ function renderRoomsList(rooms) {
         <h4 class="font-bold text-sm text-gray-800">${room.room_type}</h4>
         <p class="text-xs text-blue-600 font-bold">Rp ${parseInt(room.price_start_from).toLocaleString('id-ID')}</p>
       </div>
-      <button onclick='editRoom(${JSON.stringify(room)})' class="bg-blue-100 hover:bg-blue-200 text-blue-600 text-xs px-3 py-1.5 rounded font-bold">Edit</button>
+      <!-- Panggil ID Kamar secara langsung -->
+      <button onclick="editRoom('${room.id}')" class="bg-blue-100 hover:bg-blue-200 text-blue-600 text-xs px-3 py-1.5 rounded font-bold">Edit</button>
     </div>
   `).join('');
 }
@@ -324,7 +336,10 @@ function openRoomForm() {
   document.getElementById('room-modal').classList.remove('hidden');
 }
 
-function editRoom(room) {
+function editRoom(id) {
+  const room = globalRooms.find(r => r.id == id);
+  if (!room) return;
+
   document.getElementById('room-id').value = room.id;
   document.getElementById('room-id').disabled = true;
   document.getElementById('room-type').value = room.room_type;
@@ -393,16 +408,17 @@ async function saveRoom() {
   }
 }
 
-// --- TAB 4: ARTIKEL & PROMO ---
+// --- TAB 4: ARTIKEL & PROMO (SUDAH FIX MEMORI AMAN) ---
 function renderPostsList(posts) {
   const container = document.getElementById('posts-list-container');
+  // Memanggil ID artikel secara langsung (Anti-Crash HTML Tanda Kutip & Emoji)
   container.innerHTML = posts.map(post => `
     <div class="border border-gray-200 p-4 rounded-lg flex justify-between items-center bg-gray-50 shadow-sm">
       <div>
-        <h4 class="font-bold text-sm">${post.title}</h4>
+        <h4 class="font-bold text-sm text-gray-800">${post.title}</h4>
         <span class="text-xs px-2 py-0.5 rounded ${post.status === 'Published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">${post.status}</span>
       </div>
-      <button onclick='editPost(${JSON.stringify(post)})' class="bg-blue-100 hover:bg-blue-200 text-blue-600 text-xs px-3 py-1.5 rounded font-bold">Edit</button>
+      <button onclick="editPost(${post.id})" class="bg-blue-100 hover:bg-blue-200 text-blue-600 text-xs px-3 py-1.5 rounded font-bold">Edit</button>
     </div>
   `).join('');
 }
@@ -417,7 +433,11 @@ function openPostForm() {
   document.getElementById('post-modal').classList.remove('hidden');
 }
 
-function editPost(post) {
+// Mengambil data dari memori global
+function editPost(id) {
+  const post = globalPosts.find(p => p.id == id);
+  if (!post) return;
+
   document.getElementById('post-id').value = post.id;
   document.getElementById('post-title').value = post.title;
   document.getElementById('post-slug').value = post.slug;
@@ -455,10 +475,9 @@ async function savePost() {
   }
 }
 
-// --- TAB 5: HALAMAN KUSTOM (DENGAN FIX SAKTI ANTI-HTML CRASH) ---
+// --- TAB 5: HALAMAN KUSTOM (SUDAH FIX MEMORI AMAN) ---
 function renderPagesList(pages) {
   const container = document.getElementById('pages-list-container');
-  // Ambil data halaman kustom dinamis menggunakan ID (Aman dari kutip/line-break)
   container.innerHTML = pages.map(page => `
     <div class="border border-gray-200 p-4 rounded-lg flex justify-between items-center bg-gray-50 shadow-sm">
       <div>
@@ -479,7 +498,6 @@ function openPageForm() {
   document.getElementById('page-modal').classList.remove('hidden');
 }
 
-// Mengambil object halaman langsung dari state global memproses ID (Tanpa Inline Stringify)
 function editPage(id) {
   const page = globalPages.find(p => p.id == id);
   if (!page) return;
