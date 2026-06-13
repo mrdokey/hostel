@@ -249,7 +249,7 @@ function startSlider() {
     if (slides[slideIndex]) slides[slideIndex].classList.remove('active');
     slideIndex = (slideIndex + 1) % slides.length;
     if (slides[slideIndex]) slides[slideIndex].classList.add('active');
-  }, 5000);
+  }, 3000);
 }
 
 // LOGIKA RENDER GALERI ALBUM FOTO PEMANDANGAN
