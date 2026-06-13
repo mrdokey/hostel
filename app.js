@@ -177,7 +177,7 @@ function renderSettings(settings) {
 
   // 7. Slider Hero (Dijalankan Paling Akhir Agar Tidak Memblokir Fungsi Lain Jika Gagal)
   if (document.getElementById('slider-container') && settings.slider_images) {
-    const images = settings.slider_images.split(',');
+    const images = settings.slider_images.split(',').map(img => img.trim()).filter(img => img !== '');
     const sliderContainer = document.getElementById('slider-container');
     sliderContainer.innerHTML = images.map((img, idx) => `
       <div class="slide absolute inset-0 w-full h-full bg-cover bg-center ${idx === 0 ? 'active' : ''}" style="background-image: url('${img.trim()}')"></div>
