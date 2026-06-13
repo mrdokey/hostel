@@ -9,9 +9,10 @@ const API_URL = 'https://wa.mrdsolution.my.id/cms-api/api';
 let slideIndex = 0;
 const roomSlideIndexes = {};
 
-// State penyimpan index slider kamar dan galeri album
+// State penyimpan index slider kamar, galeri album, dan penampung penghenti interval
 let albumSlideIndex = 0;
 let totalAlbumPhotos = 0;
+let sliderInterval = null; // Pengontrol pembersih tabrakan timer ganda
 
 document.addEventListener('DOMContentLoaded', () => {
   handleRouting();
@@ -236,20 +237,31 @@ function toggleDropdown(idx) {
   document.getElementById(`dropdown-${idx}`).classList.toggle('hidden');
 }
 
-// LOGIKA RENDER AUTO-SLIDER BANNER (ANTI-CRASH 1 GAMBAR)
+// LOGIKA RENDER AUTO-SLIDER BANNER (CRASH-PROOF & SINKRONISASI CACHE AMAN)
 function startSlider() {
   const slides = document.querySelectorAll('#slider-container .slide');
+  
+  // 1. Matikan paksa interval lama jika ada (Mencegah bentrokan eksekusi ganda)
+  if (sliderInterval) {
+    clearInterval(sliderInterval);
+  }
+  
+  // 2. Setel ulang penunjuk indeks ke awal
+  slideIndex = 0;
+
   if (!slides || slides.length <= 1) {
     if (slides && slides.length === 1) {
       slides[0].classList.add('active'); 
     }
     return;
   }
-  setInterval(() => {
+
+  // 3. Jalankan interval tunggal yang baru
+  sliderInterval = setInterval(() => {
     if (slides[slideIndex]) slides[slideIndex].classList.remove('active');
     slideIndex = (slideIndex + 1) % slides.length;
     if (slides[slideIndex]) slides[slideIndex].classList.add('active');
-  }, 3000);
+  }, 3000); // Putaran 3 detik
 }
 
 // LOGIKA RENDER GALERI ALBUM FOTO PEMANDANGAN
