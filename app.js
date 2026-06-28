@@ -14,8 +14,50 @@ let albumSlideIndex = 0;
 let totalAlbumPhotos = 0;
 let sliderInterval = null; // Pengontrol pembersih tabrakan timer ganda
 
+// ========================================================
+// FITUR BARU: UTM TRACKING ENGINE (PELACAKAN IKLAN GRATIS)
+// ========================================================
+function captureUTM() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const utmParams = ['utm_source', 'utm_medium', 'utm_campaign'];
+  
+  utmParams.forEach(param => {
+    if (urlParams.has(param)) {
+      sessionStorage.setItem(param, urlParams.get(param));
+    }
+  });
+}
+
+function getTrackedWALink(phoneNumber, baseMessage) {
+  const source = sessionStorage.getItem('utm_source') || 'Direct/Organik';
+  const campaign = sessionStorage.getItem('utm_campaign') || 'none';
+  
+  // Format nomor WA agar seragam tanpa karakter '+' atau spasi
+  const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
+  
+  // Modifikasi isi pesan untuk melacak konversi
+  const trackedMsg = `${baseMessage}\n\n---\n(Ref Iklan: Source=${source} | Campaign=${campaign})`;
+  return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(trackedMsg)}`;
+}
+
+function getWhatsAppNumberFromCache() {
+  try {
+    const cached = localStorage.getItem('cms_settings');
+    if (cached) {
+      const settingsObj = JSON.parse(cached);
+      return settingsObj.whatsapp_number || '';
+    }
+  } catch (e) {}
+  return '';
+}
+
+// ========================================================
+// DOM LOAD & ROUTING
+// ========================================================
 document.addEventListener('DOMContentLoaded', () => {
+  captureUTM(); // Tangkap data iklan di baris paling pertama
   handleRouting();
+  
   // Menutup dropdown navigasi saat klik di luar area
   window.addEventListener('click', (e) => {
     if (!e.target.closest('.dropdown-trigger') && !e.target.closest('.dropdown-menu')) {
@@ -134,14 +176,17 @@ function renderSettings(settings) {
   if (document.getElementById('hero-title')) document.getElementById('hero-title').innerText = settings.hero_title || 'Welcome';
   if (document.getElementById('hero-subtitle')) document.getElementById('hero-subtitle').innerText = settings.hero_subtitle || '';
 
-  // 2. Favicon & Tautan WhatsApp
+  // 2. Favicon & Tautan WhatsApp dengan Pelacakan Iklan
   if (settings.favicon_url && document.getElementById('favicon-link')) {
     document.getElementById('favicon-link').href = settings.favicon_url + "?v=" + new Date().getTime();
   }
 
-  const waLink = settings.whatsapp_number ? `https://wa.me/${settings.whatsapp_number}` : '#';
-  if (document.getElementById('btn-hero-wa')) document.getElementById('btn-hero-wa').href = waLink;
-  if (document.getElementById('floating-wa')) document.getElementById('floating-wa').href = waLink;
+  // Menggunakan fungsi tracker agar tautan tombol utama membawa kode iklan
+  const waLinkHero = settings.whatsapp_number ? getTrackedWALink(settings.whatsapp_number, 'Halo Jimbaran Hostel, saya ingin bertanya mengenai ketersediaan promo kamar.') : '#';
+  const waLinkFloating = settings.whatsapp_number ? getTrackedWALink(settings.whatsapp_number, 'Halo Jimbaran Hostel, saya butuh informasi ketersediaan tempat tidur.') : '#';
+
+  if (document.getElementById('btn-hero-wa')) document.getElementById('btn-hero-wa').href = waLinkHero;
+  if (document.getElementById('floating-wa')) document.getElementById('floating-wa').href = waLinkFloating;
 
   if (document.getElementById('maps-iframe')) document.getElementById('maps-iframe').src = settings.maps_iframe || '';
 
@@ -302,6 +347,9 @@ function slideAlbum(direction) {
 function renderRooms(rooms) {
   const container = document.getElementById('rooms-container');
   if (!container || !rooms || rooms.length === 0) return;
+
+  // Dapatkan nomor WA terkonfigurasi untuk tombol pemesanan
+  const targetWANumber = getWhatsAppNumberFromCache();
   
   container.innerHTML = rooms.map(room => {
     try {
@@ -327,6 +375,11 @@ function renderRooms(rooms) {
         } catch (e) {}
       }
 
+      // Generate pesan kustom WhatsApp per tipe kamar + pelacak iklan otomatis
+      const formattedPrice = parseInt(room.price_start_from || 0).toLocaleString('id-ID');
+      const waBookingMsg = `Halo Jimbaran Hostel, saya ingin memesan kamar *${room.room_type}* dengan harga Rp ${formattedPrice}/malam. Apakah ada kamar kosong untuk tanggal dekat ini?`;
+      const trackedBookingLink = targetWANumber ? getTrackedWALink(targetWANumber, waBookingMsg) : '#';
+
       return `
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100/80 transition hover:shadow-md duration-300 flex flex-col h-full">
           
@@ -351,7 +404,7 @@ function renderRooms(rooms) {
             <h3 class="text-xl font-bold mb-1 text-slate-800 leading-tight">${room.room_type}</h3>
             
             <p class="text-blue-600 font-extrabold text-xl mb-4">
-              Rp ${parseInt(room.price_start_from || 0).toLocaleString('id-ID')} 
+              Rp ${formattedPrice} 
               <span class="text-xs text-slate-400 font-normal">/ night</span>
             </p>
 
@@ -379,7 +432,14 @@ function renderRooms(rooms) {
               ${list}
             </div>
 
-            <p class="text-slate-600 text-sm leading-relaxed flex-grow">${descriptionStr}</p>
+            <p class="text-slate-600 text-sm leading-relaxed mb-6">${descriptionStr}</p>
+            
+            <!-- TOMBOL PESAN LANGSUNG VIA WHATSAPP (CONVERSION OPTIMIZED) -->
+            <div class="mt-auto pt-4">
+              <a href="${trackedBookingLink}" target="_blank" class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md">
+                <i class="fa-brands fa-whatsapp mr-2 text-lg"></i> Book via WhatsApp
+              </a>
+            </div>
           </div>
         </div>
       `;
